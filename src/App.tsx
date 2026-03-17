@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { fetchTournamentData } from './services/dataService'
-import { TournamentData } from './types/tournament'
+import type { TournamentData } from './types/tournament'
 import { Trophy, Users, LayoutGrid } from 'lucide-react'
 import './App.css'
 

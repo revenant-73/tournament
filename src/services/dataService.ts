@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { TournamentData, Team, Pool, Match, BracketMatch, Standing } from '../types/tournament';
+import type { TournamentData, Team, Pool, Match, BracketMatch, Standing } from '../types/tournament';
 
 const SHEET_ID = '1uGW31Y6ey9ULqdWQtEFS6vn72Yy6slTnv5_naooZcMg'; // Replace with real ID
 
