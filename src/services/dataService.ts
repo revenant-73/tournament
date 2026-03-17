@@ -88,13 +88,14 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
         const { m1, m2 } = calculateMatchScore(sets);
         return {
           id: m.match_id || m.id || Math.random().toString(),
-          team1: m.team1 || m.team_1 || 'TBD',
-          team2: m.team2 || m.team_2 || 'TBD',
+          team1: m.team_1 || m.team1 || 'TBD',
+          team2: m.team_2 || m.team2 || 'TBD',
           sets,
           matchScore1: m1,
           matchScore2: m2,
           time: m.time || m.match_time || '',
           court: m.court || m.court_number || '',
+          workTeam: m.work_team || m.workteam || '',
           status: (m.status || 'pending').toLowerCase() as Match['status']
         };
       });
@@ -112,12 +113,13 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
           id: b.match_id || b.id || Math.random().toString(),
           round: b.round || '', 
           label: b.label || b.match_label || '',
-          team1: b.team1 || b.team_1 || 'TBD',
-          team2: b.team2 || b.team_2 || 'TBD',
+          team1: b.team_1 || b.team1 || 'TBD',
+          team2: b.team_2 || b.team2 || 'TBD',
           sets,
           matchScore1: m1,
           matchScore2: m2,
           winner: b.winner || '',
+          workTeam: b.work_team || b.workteam || '',
           bracketName: name
         });
       });

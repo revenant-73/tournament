@@ -196,6 +196,15 @@ td {
 .bracket-match { border-left: 4px solid #646cff; }
 .round-label { font-weight: bold; color: #646cff; font-size: 0.8rem; }
 
+.work-team-info {
+  font-size: 0.75rem;
+  color: #888;
+  margin-bottom: 0.5rem;
+  font-style: italic;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #333;
+}
+
 .home-view {
   display: flex;
   flex-direction: column;

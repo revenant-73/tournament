@@ -158,6 +158,11 @@ function App() {
                           <span className="match-time">{match.time} - Court {match.court}</span>
                           <span className={`badge badge-${match.status}`}>{match.status}</span>
                         </div>
+                        {match.workTeam && (
+                          <div className="work-team-info">
+                            Work: {match.workTeam}
+                          </div>
+                        )}
                         <div className="match-teams">
                           <div className={`team-row ${match.matchScore1! > match.matchScore2! ? 'winner' : ''}`}>
                             <span className="team-name">{match.team1}</span>
@@ -196,6 +201,11 @@ function App() {
                       <div className="match-header">
                         <span className="round-label">{match.round} - {match.label}</span>
                       </div>
+                      {match.workTeam && (
+                        <div className="work-team-info">
+                          Work: {match.workTeam}
+                        </div>
+                      )}
                       <div className="match-teams">
                         <div className={`team-row ${match.winner === match.team1 ? 'winner' : ''}`}>
                           <span className="team-name">{match.team1}</span>

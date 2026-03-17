@@ -13,6 +13,7 @@ export interface Match {
   matchScore2?: number; // Sets won by team2
   time?: string;
   court?: string;
+  workTeam?: string;
   status: 'pending' | 'live' | 'completed';
 }
 
@@ -43,6 +44,7 @@ export interface BracketMatch {
   matchScore1?: number;
   matchScore2?: number;
   winner?: string;
+  workTeam?: string;
   bracketName: string;
 }
 
