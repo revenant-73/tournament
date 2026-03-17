@@ -4,16 +4,20 @@ import type { TournamentData, Team, Pool, Match, BracketMatch, Standing } from '
 const SHEET_ID = '1uGW31Y6ey9ULqdWQtEFS6vn72Yy6slTnv5_naooZcMg'; // Replace with real ID
 
 const getCsvUrl = (sheetId: string, sheetName: string) => 
-  `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+  `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
 
 const fetchCsv = async (sheetId: string, sheetName: string): Promise<any[]> => {
   const url = getCsvUrl(sheetId, sheetName);
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch sheet "${sheetName}": ${response.statusText}`);
+  }
   const text = await response.text();
   return new Promise((resolve) => {
     Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: (header) => header.trim().toLowerCase().replace(/\s+/g, '_'),
       complete: (results: Papa.ParseResult<any>) => resolve(results.data),
     });
   });
@@ -21,9 +25,18 @@ const fetchCsv = async (sheetId: string, sheetName: string): Promise<any[]> => {
 
 const parseSets = (m: any) => {
   const sets = [];
-  if (m.s1_t1 !== undefined && m.s1_t2 !== undefined) sets.push({ score1: parseInt(m.s1_t1), score2: parseInt(m.s1_t2) });
-  if (m.s2_t1 !== undefined && m.s2_t2 !== undefined) sets.push({ score1: parseInt(m.s2_t1), score2: parseInt(m.s2_t2) });
-  if (m.s3_t1 !== undefined && m.s3_t2 !== undefined) sets.push({ score1: parseInt(m.s3_t1), score2: parseInt(m.s3_t2) });
+  const s1_t1 = parseInt(m.s1_t1);
+  const s1_t2 = parseInt(m.s1_t2);
+  if (!isNaN(s1_t1) && !isNaN(s1_t2)) sets.push({ score1: s1_t1, score2: s1_t2 });
+
+  const s2_t1 = parseInt(m.s2_t1);
+  const s2_t2 = parseInt(m.s2_t2);
+  if (!isNaN(s2_t1) && !isNaN(s2_t2)) sets.push({ score1: s2_t1, score2: s2_t2 });
+
+  const s3_t1 = parseInt(m.s3_t1);
+  const s3_t2 = parseInt(m.s3_t2);
+  if (!isNaN(s3_t1) && !isNaN(s3_t2)) sets.push({ score1: s3_t1, score2: s3_t2 });
+
   return sets.length > 0 ? sets : undefined;
 };
 
@@ -63,9 +76,9 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
     );
 
     const teams: Team[] = teamsRaw.map(t => ({
-      id: t.id,
-      name: t.name,
-      pool: t.pool
+      id: t.id || t.team_id || t.team_name || Math.random().toString(),
+      name: t.name || t.team_name || t.team || 'Unknown Team',
+      pool: t.pool || t.pool_name || 'No Pool'
     }));
 
     const pools: Pool[] = poolSheetNames.map((name, index) => {
@@ -74,15 +87,15 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
         const sets = parseSets(m);
         const { m1, m2 } = calculateMatchScore(sets);
         return {
-          id: m.match_id,
-          team1: m.team1,
-          team2: m.team2,
+          id: m.match_id || m.id || Math.random().toString(),
+          team1: m.team1 || m.team_1 || 'TBD',
+          team2: m.team2 || m.team_2 || 'TBD',
           sets,
           matchScore1: m1,
           matchScore2: m2,
-          time: m.time,
-          court: m.court,
-          status: m.status || 'pending'
+          time: m.time || m.match_time || '',
+          court: m.court || m.court_number || '',
+          status: (m.status || 'pending').toLowerCase() as Match['status']
         };
       });
       
@@ -96,16 +109,16 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
         const sets = parseSets(b);
         const { m1, m2 } = calculateMatchScore(sets);
         bracket.push({
-          id: b.match_id,
-          round: b.round, // This now represents the bracket name if you prefer
-          label: b.label,
-          team1: b.team1,
-          team2: b.team2,
+          id: b.match_id || b.id || Math.random().toString(),
+          round: b.round || '', 
+          label: b.label || b.match_label || '',
+          team1: b.team1 || b.team_1 || 'TBD',
+          team2: b.team2 || b.team_2 || 'TBD',
           sets,
           matchScore1: m1,
           matchScore2: m2,
-          winner: b.winner,
-          bracketName: name // We'll add this to the type
+          winner: b.winner || '',
+          bracketName: name
         });
       });
     });
