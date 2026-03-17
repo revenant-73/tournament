@@ -18,7 +18,15 @@ const fetchCsv = async (sheetId: string, sheetName: string): Promise<any[]> => {
       header: true,
       skipEmptyLines: true,
       transformHeader: (header) => header.trim().toLowerCase().replace(/\s+/g, '_'),
-      complete: (results: Papa.ParseResult<any>) => resolve(results.data),
+      complete: (results: Papa.ParseResult<any>) => {
+        if (results.data && results.data.length > 0) {
+          console.log(`Sheet "${sheetName}" headers:`, Object.keys(results.data[0]));
+          console.log(`Sheet "${sheetName}" first row:`, results.data[0]);
+        } else {
+          console.warn(`Sheet "${sheetName}" is empty.`);
+        }
+        resolve(results.data);
+      },
     });
   });
 };
@@ -96,20 +104,25 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
         const { m1, m2 } = calculateMatchScore(sets);
         return {
           id: m.match_id || m.id || Math.random().toString(),
-          team1: m.team_1 || m.team1 || 'TBD',
-          team2: m.team_2 || m.team2 || 'TBD',
+          team1: (m.team_1 || m.team1 || 'TBD').trim(),
+          team2: (m.team_2 || m.team2 || 'TBD').trim(),
           sets,
           matchScore1: m1,
           matchScore2: m2,
           time: m.time || m.match_time || '',
           court: m.court || m.court_number || '',
-          workTeam: m.work_team || m.workteam || '',
+          workTeam: (m.work_team || m.workteam || '').trim(),
           status: (m.status || 'pending').toLowerCase() as Match['status']
         };
       });
+
+      console.log(`Pool ${name}: found ${poolMatches.length} matches`);
+      if (poolMatches.length > 0) {
+        console.log(`Example match from ${name}:`, poolMatches[0]);
+      }
       
       // Get teams for this pool from Teams sheet OR from matches if Teams sheet is incomplete
-      let poolTeams = teams.filter(t => t.pool === name);
+      let poolTeams = teams.filter(t => t.pool.trim() === name.trim());
       if (poolTeams.length === 0 && poolMatches.length > 0) {
         // Fallback: Extract team names from matches if not found in Teams sheet
         const uniqueNames = new Set<string>();
@@ -210,23 +223,25 @@ const calculateStandings = (teams: Team[], matches: Match[]): Standing[] => {
 
 const getMockData = (): TournamentData => {
   const teams: Team[] = [
-    { id: '1', name: 'Spike Squad', pool: 'Pool A' },
-    { id: '2', name: 'Net Rulers', pool: 'Pool A' },
+    { id: '1', name: 'Team 9', pool: 'Pool C' },
+    { id: '2', name: 'Team 11', pool: 'Pool C' },
+    { id: '3', name: 'Team 10', pool: 'Pool C' },
   ];
 
   const poolMatches: Match[] = [
     { 
-      id: 'm1', team1: 'Spike Squad', team2: 'Net Rulers', 
-      sets: [{ score1: 25, score2: 20 }, { score1: 25, score2: 22 }],
-      matchScore1: 2, matchScore2: 0,
-      time: '9:00 AM', court: '1', status: 'completed' 
+      id: 'c_m1', team1: 'Team 9', team2: 'Team 11', 
+      workTeam: 'Team 10',
+      sets: [{ score1: 25, score2: 20 }],
+      matchScore1: 1, matchScore2: 0,
+      time: '10:00 AM', court: '3', status: 'completed' 
     }
   ];
 
   return {
     teams,
     pools: [{ 
-      name: 'Pool A', 
+      name: 'Pool C', 
       teams, 
       matches: poolMatches, 
       standings: calculateStandings(teams, poolMatches) 
