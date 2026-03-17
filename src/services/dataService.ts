@@ -63,15 +63,18 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
   const bracketSheetNames = ['Gold', 'Silver'];
 
   try {
-    const teamsRaw = await fetchCsv(actualSheetId, 'Teams');
+    const teamsRaw = await fetchCsv(actualSheetId, 'Teams').catch(e => {
+      console.error('Failed to fetch Teams sheet:', e);
+      return [];
+    });
     
     // Fetch all pool sheets
-    const poolDataRaw = await Promise.all(
+    const poolDataSettled = await Promise.allSettled(
       poolSheetNames.map(name => fetchCsv(actualSheetId, name))
     );
 
     // Fetch all bracket sheets
-    const bracketDataRaw = await Promise.all(
+    const bracketDataSettled = await Promise.allSettled(
       bracketSheetNames.map(name => fetchCsv(actualSheetId, name))
     );
 
@@ -82,8 +85,13 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
     }));
 
     const pools: Pool[] = poolSheetNames.map((name, index) => {
-      const poolTeams = teams.filter(t => t.pool === name);
-      const poolMatches: Match[] = poolDataRaw[index].map(m => {
+      const settledResult = poolDataSettled[index];
+      const poolMatchesRaw = settledResult.status === 'fulfilled' ? settledResult.value : [];
+      if (settledResult.status === 'rejected') {
+        console.error(`Failed to fetch pool sheet "${name}":`, settledResult.reason);
+      }
+
+      const poolMatches: Match[] = poolMatchesRaw.map(m => {
         const sets = parseSets(m);
         const { m1, m2 } = calculateMatchScore(sets);
         return {
@@ -100,13 +108,31 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
         };
       });
       
+      // Get teams for this pool from Teams sheet OR from matches if Teams sheet is incomplete
+      let poolTeams = teams.filter(t => t.pool === name);
+      if (poolTeams.length === 0 && poolMatches.length > 0) {
+        // Fallback: Extract team names from matches if not found in Teams sheet
+        const uniqueNames = new Set<string>();
+        poolMatches.forEach(m => {
+          if (m.team1 && m.team1 !== 'TBD') uniqueNames.add(m.team1);
+          if (m.team2 && m.team2 !== 'TBD') uniqueNames.add(m.team2);
+        });
+        poolTeams = Array.from(uniqueNames).map(n => ({ id: n, name: n, pool: name }));
+      }
+      
       const standings = calculateStandings(poolTeams, poolMatches);
       return { name, teams: poolTeams, matches: poolMatches, standings };
     });
 
     const bracket: BracketMatch[] = [];
     bracketSheetNames.forEach((name, index) => {
-      bracketDataRaw[index].forEach(b => {
+      const settledResult = bracketDataSettled[index];
+      const bracketMatchesRaw = settledResult.status === 'fulfilled' ? settledResult.value : [];
+      if (settledResult.status === 'rejected') {
+        console.error(`Failed to fetch bracket sheet "${name}":`, settledResult.reason);
+      }
+
+      bracketMatchesRaw.forEach(b => {
         const sets = parseSets(b);
         const { m1, m2 } = calculateMatchScore(sets);
         bracket.push({
