@@ -7,7 +7,7 @@ import './App.css'
 function App() {
   const [data, setData] = useState<TournamentData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'teams' | 'pools' | 'bracket'>('pools')
+  const [view, setView] = useState<{ type: 'home' | 'teams' | 'pool' | 'bracket', id?: string }>({ type: 'home' })
 
   useEffect(() => {
     const loadData = async () => {
@@ -26,49 +26,104 @@ function App() {
   if (loading) return <div className="loading">Loading tournament data...</div>
   if (!data) return <div className="error">Failed to load data. Check Google Sheet ID.</div>
 
+  const bracketNames = Array.from(new Set(data.bracket.map(b => b.bracketName)))
+
+  const getTeamBrackets = (teamName: string) => {
+    return Array.from(new Set(
+      data.bracket
+        .filter(b => b.team1 === teamName || b.team2 === teamName)
+        .map(b => b.bracketName)
+    ))
+  }
+
   return (
     <div className="container">
       <header>
-        <h1>Volleyball Tournament</h1>
+        <h1 onClick={() => setView({ type: 'home' })} style={{ cursor: 'pointer' }}>Volleyball Tournament</h1>
         <div className="nav">
-          <button className={activeTab === 'pools' ? 'active' : ''} onClick={() => setActiveTab('pools')}>
-            <LayoutGrid size={18} /> Pools
+          <button className={view.type === 'home' ? 'active' : ''} onClick={() => setView({ type: 'home' })}>
+            <LayoutGrid size={18} /> Home
           </button>
-          <button className={activeTab === 'bracket' ? 'active' : ''} onClick={() => setActiveTab('bracket')}>
-            <Trophy size={18} /> Bracket
-          </button>
-          <button className={activeTab === 'teams' ? 'active' : ''} onClick={() => setActiveTab('teams')}>
+          <button className={view.type === 'teams' ? 'active' : ''} onClick={() => setView({ type: 'teams' })}>
             <Users size={18} /> Teams
           </button>
         </div>
       </header>
 
       <main>
-        {activeTab === 'teams' && (
+        {view.type === 'home' && (
+          <div className="home-view">
+            <div className="section">
+              <h2>Teams</h2>
+              <button className="big-button" onClick={() => setView({ type: 'teams' })}>
+                <Users size={24} /> View All Teams
+              </button>
+            </div>
+
+            <div className="section">
+              <h2>Pools</h2>
+              <div className="button-grid">
+                {data.pools.map(pool => (
+                  <button key={pool.name} className="big-button" onClick={() => setView({ type: 'pool', id: pool.name })}>
+                    <LayoutGrid size={24} /> {pool.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="section">
+              <h2>Brackets</h2>
+              <div className="button-grid">
+                {bracketNames.map(name => (
+                  <button key={name} className="big-button" onClick={() => setView({ type: 'bracket', id: name })}>
+                    <Trophy size={24} /> {name} Bracket
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {view.type === 'teams' && (
           <div className="card">
             <h2>Teams</h2>
             <table>
               <thead>
                 <tr>
                   <th>Team Name</th>
-                  <th>Pool</th>
+                  <th>Pool / Bracket</th>
                 </tr>
               </thead>
               <tbody>
-                {data.teams.map(team => (
-                  <tr key={team.id}>
-                    <td>{team.name}</td>
-                    <td>{team.pool}</td>
-                  </tr>
-                ))}
+                {data.teams.map(team => {
+                  const teamBrackets = getTeamBrackets(team.name);
+                  return (
+                    <tr key={team.id}>
+                      <td>{team.name}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <a href="#" onClick={(e) => { e.preventDefault(); setView({ type: 'pool', id: team.pool }) }}>
+                            {team.pool}
+                          </a>
+                          {teamBrackets.map(b => (
+                            <a key={b} href="#" onClick={(e) => { e.preventDefault(); setView({ type: 'bracket', id: b }) }}>
+                              {b}
+                            </a>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
+            <button className="back-button" onClick={() => setView({ type: 'home' })}>Back to Home</button>
           </div>
         )}
 
-        {activeTab === 'pools' && (
+        {view.type === 'pool' && (
           <div className="pools-view">
-            {data.pools.map(pool => (
+            {data.pools.filter(p => p.name === view.id).map(pool => (
               <div key={pool.name} className="pool-container">
                 <div className="card">
                   <h3>{pool.name} Standings</h3>
@@ -125,43 +180,43 @@ function App() {
                 </div>
               </div>
             ))}
+            <button className="back-button" onClick={() => setView({ type: 'home' })}>Back to Home</button>
           </div>
         )}
 
-        {activeTab === 'bracket' && (
+        {view.type === 'bracket' && (
           <div className="bracket-view">
-            {Array.from(new Set(data.bracket.map(b => b.bracketName))).map(bracketName => (
-              <div key={bracketName} className="bracket-section">
-                <h2>{bracketName}</h2>
-                <div className="grid">
-                  {data.bracket
-                    .filter(b => b.bracketName === bracketName)
-                    .map(match => (
-                      <div key={match.id} className="match-card bracket-match">
-                        <div className="match-header">
-                          <span className="round-label">{match.round} - {match.label}</span>
-                        </div>
-                        <div className="match-teams">
-                          <div className={`team-row ${match.winner === match.team1 ? 'winner' : ''}`}>
-                            <span className="team-name">{match.team1}</span>
-                            <div className="sets">
-                              {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score1}</span>)}
-                              <span className="match-score">{match.matchScore1}</span>
-                            </div>
+            <div className="bracket-section">
+              <h2>{view.id} Bracket</h2>
+              <div className="grid">
+                {data.bracket
+                  .filter(b => b.bracketName === view.id)
+                  .map(match => (
+                    <div key={match.id} className="match-card bracket-match">
+                      <div className="match-header">
+                        <span className="round-label">{match.round} - {match.label}</span>
+                      </div>
+                      <div className="match-teams">
+                        <div className={`team-row ${match.winner === match.team1 ? 'winner' : ''}`}>
+                          <span className="team-name">{match.team1}</span>
+                          <div className="sets">
+                            {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score1}</span>)}
+                            <span className="match-score">{match.matchScore1}</span>
                           </div>
-                          <div className={`team-row ${match.winner === match.team2 ? 'winner' : ''}`}>
-                            <span className="team-name">{match.team2}</span>
-                            <div className="sets">
-                              {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score2}</span>)}
-                              <span className="match-score">{match.matchScore2}</span>
-                            </div>
+                        </div>
+                        <div className={`team-row ${match.winner === match.team2 ? 'winner' : ''}`}>
+                          <span className="team-name">{match.team2}</span>
+                          <div className="sets">
+                            {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score2}</span>)}
+                            <span className="match-score">{match.matchScore2}</span>
                           </div>
                         </div>
                       </div>
-                    ))}
-                </div>
+                    </div>
+                  ))}
               </div>
-            ))}
+            </div>
+            <button className="back-button" onClick={() => setView({ type: 'home' })}>Back to Home</button>
           </div>
         )}
       </main>
