@@ -14,7 +14,7 @@ const fetchCsv = async (sheetId: string, sheetName: string): Promise<any[]> => {
     Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => resolve(results.data),
+      complete: (results: Papa.ParseResult<any>) => resolve(results.data),
     });
   });
 };
