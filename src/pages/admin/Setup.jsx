@@ -399,19 +399,41 @@ const PoolsManager = ({ tournamentId }) => {
       return;
     }
 
-    // Basic Round Robin generation
-    const matches = [];
-    for (let i = 0; i < teamsInPool.length; i++) {
-      for (let j = i + 1; j < teamsInPool.length; j++) {
-        matches.push({
-          age_group_id: selectedGroupId,
-          pool_id: poolId,
-          match_type: 'pool',
-          team1_id: teamsInPool[i].id,
-          team2_id: teamsInPool[j].id,
-          match_order: matches.length + 1,
-          status: 'scheduled'
-        });
+    // Custom 4-team schedule: 1v3, 2v4, 1v4, 2v3, 3v4, 1v2
+    let matches = [];
+    if (teamsInPool.length === 4) {
+      const schedule = [
+        [0, 2], // Round 1: 1v3
+        [1, 3], // Round 2: 2v4
+        [0, 3], // Round 3: 1v4
+        [1, 2], // Round 4: 2v3
+        [2, 3], // Round 5: 3v4
+        [0, 1]  // Round 6: 1v2
+      ];
+      
+      matches = schedule.map((pair, idx) => ({
+        age_group_id: selectedGroupId,
+        pool_id: poolId,
+        match_type: 'pool',
+        team1_id: teamsInPool[pair[0]].id,
+        team2_id: teamsInPool[pair[1]].id,
+        match_order: idx + 1,
+        status: 'scheduled'
+      }));
+    } else {
+      // Basic Round Robin for other sizes
+      for (let i = 0; i < teamsInPool.length; i++) {
+        for (let j = i + 1; j < teamsInPool.length; j++) {
+          matches.push({
+            age_group_id: selectedGroupId,
+            pool_id: poolId,
+            match_type: 'pool',
+            team1_id: teamsInPool[i].id,
+            team2_id: teamsInPool[j].id,
+            match_order: matches.length + 1,
+            status: 'scheduled'
+          });
+        }
       }
     }
 
