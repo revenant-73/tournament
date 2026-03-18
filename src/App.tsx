@@ -156,24 +156,26 @@ function App() {
                       const isT1Winner = (match.matchScore1 || 0) > (match.matchScore2 || 0);
                       const isT2Winner = (match.matchScore2 || 0) > (match.matchScore1 || 0);
                       
-                      // If no sets exist but teams exist, show 0-0 for first 2 sets
+                      // If no sets exist but match exists, show 0-0 for first 2 sets
                       const displaySets = match.sets && match.sets.length > 0 
                         ? match.sets 
-                        : (match.team1 || match.team2 ? [{score1: 0, score2: 0}, {score1: 0, score2: 0}] : []);
+                        : (match.id ? [{score1: 0, score2: 0}, {score1: 0, score2: 0}] : []);
 
                       return (
                         <div key={match.id} className="match-row-compact">
                           <div className="match-main-info">
                             <span className="match-id-label">{match.id}</span>
-                            <span className="match-time-court">{match.time} | Crt {match.court}</span>
+                            <span className="match-time-court">
+                              {match.time} {(match.time && match.court) ? '|' : ''} {match.court ? `Crt ${match.court}` : ''}
+                            </span>
                             
                             <div className="match-teams-vs">
                               <span className={`team-name-compact ${isT1Winner ? 'winner-underline' : ''}`}>
-                                {match.team1}
+                                {match.team1 || 'TBD'}
                               </span>
                               <span className="vs-label">vs</span>
                               <span className={`team-name-compact ${isT2Winner ? 'winner-underline' : ''}`}>
-                                {match.team2}
+                                {match.team2 || 'TBD'}
                               </span>
                             </div>
 
@@ -212,7 +214,9 @@ function App() {
                   .map(match => {
                     const isT1Winner = match.winner === match.team1 || (match.matchScore1 || 0) > (match.matchScore2 || 0);
                     const isT2Winner = match.winner === match.team2 || (match.matchScore2 || 0) > (match.matchScore1 || 0);
-                    const displaySets = match.sets && match.sets.length > 0 ? match.sets : (match.team1 || match.team2 ? [{score1: 0, score2: 0}, {score1: 0, score2: 0}] : []);
+                    const displaySets = match.sets && match.sets.length > 0 
+                      ? match.sets 
+                      : (match.id ? [{score1: 0, score2: 0}, {score1: 0, score2: 0}] : []);
 
                     return (
                       <div key={match.id} className="match-row-compact bracket-row">
@@ -222,11 +226,11 @@ function App() {
                           
                           <div className="match-teams-vs">
                             <span className={`team-name-compact ${isT1Winner ? 'winner-underline' : ''}`}>
-                              {match.team1}
+                              {match.team1 || 'TBD'}
                             </span>
                             <span className="vs-label">vs</span>
                             <span className={`team-name-compact ${isT2Winner ? 'winner-underline' : ''}`}>
-                              {match.team2}
+                              {match.team2 || 'TBD'}
                             </span>
                           </div>
 

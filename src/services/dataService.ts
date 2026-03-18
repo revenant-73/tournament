@@ -45,14 +45,31 @@ const parseSets = (m: any) => {
   const sets = [];
   for (let i = 1; i <= 3; i++) {
     // Try various column name formats (s1_t1, set1_t1, set1_team1, etc.)
-    const score1 = parseInt(m[`s${i}_t1`] || m[`set${i}_t1`] || m[`set${i}_team1`] || m[`s${i}_team1`] || m[`set_${i}_team_1`]);
-    const score2 = parseInt(m[`s${i}_t2`] || m[`set${i}_t2`] || m[`set${i}_team2`] || m[`s${i}_team2`] || m[`set_${i}_team_2`]);
+    const score1 = parseInt(
+      m[`s${i}_t1`] || m[`set${i}_t1`] || m[`set${i}_team1`] || m[`s${i}_team1`] || m[`set_${i}_team_1`] || 
+      m[`s${i}_score1`] || m[`set${i}_score1`] || m[`set_${i}_score_1`] || m[`s_${i}_score_1`] ||
+      m[`s${i}_1`] || m[`set_${i}_1`] || m[`s_${i}_t_1`]
+    );
+    const score2 = parseInt(
+      m[`s${i}_t2`] || m[`set${i}_t2`] || m[`set${i}_team2`] || m[`s${i}_team2`] || m[`set_${i}_team_2`] ||
+      m[`s${i}_score2`] || m[`set${i}_score2`] || m[`set_${i}_score_2`] || m[`s_${i}_score_2`] ||
+      m[`s${i}_2`] || m[`set_${i}_2`] || m[`s_${i}_t_2`]
+    );
     
     if (!isNaN(score1) && !isNaN(score2)) {
       sets.push({ score1, score2 });
     }
   }
   return sets.length > 0 ? sets : undefined;
+};
+
+const getMatchValue = (m: any, aliases: string[]) => {
+  for (const alias of aliases) {
+    if (m[alias] !== undefined && m[alias] !== null && m[alias].toString().trim() !== '') {
+      return m[alias].toString().trim();
+    }
+  }
+  return '';
 };
 
 const calculateMatchScore = (sets?: { score1: number; score2: number }[]) => {
@@ -122,15 +139,15 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
         const status = (m.status || (sets ? 'completed' : 'pending')).toLowerCase() as Match['status'];
         
         return {
-          id: m.match_id || m.id || Math.random().toString(),
-          team1: (m.team_1 || m.team1 || '').trim(),
-          team2: (m.team_2 || m.team2 || '').trim(),
+          id: getMatchValue(m, ['match_id', 'id', 'match', '#', 'match_#']) || Math.random().toString().substring(0, 5),
+          team1: getMatchValue(m, ['team_1', 'team1', 't1', 'team_one']),
+          team2: getMatchValue(m, ['team_2', 'team2', 't2', 'team_two']),
           sets,
           matchScore1: m1,
           matchScore2: m2,
-          time: m.time || m.match_time || '',
-          court: m.court || m.court_number || '',
-          workTeam: (m.work_team || m.workteam || '').trim(),
+          time: getMatchValue(m, ['time', 'match_time', 'start_time']),
+          court: getMatchValue(m, ['court', 'court_number', 'ct']),
+          workTeam: getMatchValue(m, ['work_team', 'workteam', 'work', 'ref']),
           status
         };
       });
@@ -169,16 +186,16 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
         const sets = parseSets(b);
         const { m1, m2 } = calculateMatchScore(sets);
         bracket.push({
-          id: b.match_id || b.id || Math.random().toString(),
+          id: getMatchValue(b, ['match_id', 'id', 'match', '#', 'match_#']) || Math.random().toString().substring(0, 5),
           round: b.round || '', 
-          label: b.label || b.match_label || '',
-          team1: (b.team_1 || b.team1 || '').trim(),
-          team2: (b.team_2 || b.team2 || '').trim(),
+          label: getMatchValue(b, ['label', 'match_label', 'game']),
+          team1: getMatchValue(b, ['team_1', 'team1', 't1', 'team_one']),
+          team2: getMatchValue(b, ['team_2', 'team2', 't2', 'team_two']),
           sets,
           matchScore1: m1,
           matchScore2: m2,
           winner: b.winner || '',
-          workTeam: (b.work_team || b.workteam || '').trim(),
+          workTeam: getMatchValue(b, ['work_team', 'workteam', 'work', 'ref']),
           bracketName: name
         });
       });

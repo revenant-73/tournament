@@ -213,6 +213,7 @@ td {
   border-bottom: 1px solid #2a2a2a;
   gap: 1rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .match-main-info {
