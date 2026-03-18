@@ -155,7 +155,7 @@ function App() {
                     {pool.matches.map(match => (
                       <div key={match.id} className="match-card">
                         <div className="match-header">
-                          <span className="match-time">{match.time} - Court {match.court}</span>
+                          <span className="match-time">{match.id} | {match.time} - Court {match.court}</span>
                           <span className={`badge badge-${match.status}`}>{match.status}</span>
                         </div>
                         {match.workTeam && (
@@ -164,14 +164,14 @@ function App() {
                           </div>
                         )}
                         <div className="match-teams">
-                          <div className={`team-row ${match.matchScore1! > match.matchScore2! ? 'winner' : ''}`}>
+                          <div className={`team-row ${(match.matchScore1 || 0) > (match.matchScore2 || 0) ? 'winner' : ''}`}>
                             <span className="team-name">{match.team1}</span>
                             <div className="sets">
                               {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score1}</span>)}
                               <span className="match-score">({match.matchScore1})</span>
                             </div>
                           </div>
-                          <div className={`team-row ${match.matchScore2! > match.matchScore1! ? 'winner' : ''}`}>
+                          <div className={`team-row ${(match.matchScore2 || 0) > (match.matchScore1 || 0) ? 'winner' : ''}`}>
                             <span className="team-name">{match.team2}</span>
                             <div className="sets">
                               {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score2}</span>)}
@@ -207,14 +207,14 @@ function App() {
                         </div>
                       )}
                       <div className="match-teams">
-                        <div className={`team-row ${match.winner === match.team1 ? 'winner' : ''}`}>
+                        <div className={`team-row ${match.winner === match.team1 || (match.matchScore1 || 0) > (match.matchScore2 || 0) ? 'winner' : ''}`}>
                           <span className="team-name">{match.team1}</span>
                           <div className="sets">
                             {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score1}</span>)}
                             <span className="match-score">{match.matchScore1}</span>
                           </div>
                         </div>
-                        <div className={`team-row ${match.winner === match.team2 ? 'winner' : ''}`}>
+                        <div className={`team-row ${match.winner === match.team2 || (match.matchScore2 || 0) > (match.matchScore1 || 0) ? 'winner' : ''}`}>
                           <span className="team-name">{match.team2}</span>
                           <div className="sets">
                             {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score2}</span>)}

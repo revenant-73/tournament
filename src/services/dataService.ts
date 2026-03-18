@@ -33,18 +33,15 @@ const fetchCsv = async (sheetId: string, sheetName: string): Promise<any[]> => {
 
 const parseSets = (m: any) => {
   const sets = [];
-  const s1_t1 = parseInt(m.s1_t1);
-  const s1_t2 = parseInt(m.s1_t2);
-  if (!isNaN(s1_t1) && !isNaN(s1_t2)) sets.push({ score1: s1_t1, score2: s1_t2 });
-
-  const s2_t1 = parseInt(m.s2_t1);
-  const s2_t2 = parseInt(m.s2_t2);
-  if (!isNaN(s2_t1) && !isNaN(s2_t2)) sets.push({ score1: s2_t1, score2: s2_t2 });
-
-  const s3_t1 = parseInt(m.s3_t1);
-  const s3_t2 = parseInt(m.s3_t2);
-  if (!isNaN(s3_t1) && !isNaN(s3_t2)) sets.push({ score1: s3_t1, score2: s3_t2 });
-
+  for (let i = 1; i <= 3; i++) {
+    // Try various column name formats (s1_t1, set1_t1, set1_team1, etc.)
+    const score1 = parseInt(m[`s${i}_t1`] || m[`set${i}_t1`] || m[`set${i}_team1`] || m[`s${i}_team1`] || m[`set_${i}_team_1`]);
+    const score2 = parseInt(m[`s${i}_t2`] || m[`set${i}_t2`] || m[`set${i}_team2`] || m[`s${i}_team2`] || m[`set_${i}_team_2`]);
+    
+    if (!isNaN(score1) && !isNaN(score2)) {
+      sets.push({ score1, score2 });
+    }
+  }
   return sets.length > 0 ? sets : undefined;
 };
 
@@ -86,11 +83,20 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
       bracketSheetNames.map(name => fetchCsv(actualSheetId, name))
     );
 
-    const teams: Team[] = teamsRaw.map(t => ({
-      id: t.id || t.team_id || t.team_name || Math.random().toString(),
-      name: t.name || t.team_name || t.team || 'Unknown Team',
-      pool: t.pool || t.pool_name || 'No Pool'
-    }));
+    const teams: Team[] = teamsRaw.map(t => {
+      const rawPool = (t.pool || t.pool_name || 'No Pool').trim();
+      // Try to match short name like "C" to sheet name like "Pool C"
+      const matchedSheet = poolSheetNames.find(ps => 
+        ps.toLowerCase() === rawPool.toLowerCase() || 
+        ps.toLowerCase() === `pool ${rawPool.toLowerCase()}`
+      );
+      
+      return {
+        id: t.id || t.team_id || t.team_name || Math.random().toString(),
+        name: t.name || t.team_name || t.team || 'Unknown Team',
+        pool: matchedSheet || rawPool
+      };
+    });
 
     const pools: Pool[] = poolSheetNames.map((name, index) => {
       const settledResult = poolDataSettled[index];
@@ -102,6 +108,9 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
       const poolMatches: Match[] = poolMatchesRaw.map(m => {
         const sets = parseSets(m);
         const { m1, m2 } = calculateMatchScore(sets);
+        // Ensure winner is calculated if not explicitly provided
+        const status = (m.status || (sets ? 'completed' : 'pending')).toLowerCase() as Match['status'];
+        
         return {
           id: m.match_id || m.id || Math.random().toString(),
           team1: (m.team_1 || m.team1 || 'TBD').trim(),
@@ -112,19 +121,20 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
           time: m.time || m.match_time || '',
           court: m.court || m.court_number || '',
           workTeam: (m.work_team || m.workteam || '').trim(),
-          status: (m.status || 'pending').toLowerCase() as Match['status']
+          status
         };
       });
 
       console.log(`Pool ${name}: found ${poolMatches.length} matches`);
       if (poolMatches.length > 0) {
-        console.log(`Example match from ${name}:`, poolMatches[0]);
+        console.log(`First match for ${name}:`, poolMatches[0]);
       }
       
-      // Get teams for this pool from Teams sheet OR from matches if Teams sheet is incomplete
-      let poolTeams = teams.filter(t => t.pool.trim() === name.trim());
+      // Get teams for this pool from normalized Teams list
+      let poolTeams = teams.filter(t => t.pool === name);
+      
+      // Fallback: If Teams list is empty for this pool, extract from matches
       if (poolTeams.length === 0 && poolMatches.length > 0) {
-        // Fallback: Extract team names from matches if not found in Teams sheet
         const uniqueNames = new Set<string>();
         poolMatches.forEach(m => {
           if (m.team1 && m.team1 !== 'TBD') uniqueNames.add(m.team1);
