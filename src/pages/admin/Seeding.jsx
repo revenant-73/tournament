@@ -203,6 +203,7 @@ const Seeding = () => {
         >
           {saving ? 'Generating...' : '🔥 Generate Bracket Matches'}
         </button>
+        </div>
       </div>
     </Layout>
   );
