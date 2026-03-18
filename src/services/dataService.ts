@@ -1,10 +1,16 @@
 import Papa from 'papaparse';
 import type { TournamentData, Team, Pool, Match, BracketMatch, Standing } from '../types/tournament';
 
-const SHEET_ID = '1uGW31Y6ey9ULqdWQtEFS6vn72Yy6slTnv5_naooZcMg'; // Replace with real ID
+const SHEET_ID = '2PACX-1vQVA8BQZzTimzI45uXyUlmveJNWATwaNUQaeIBPa73RqxkktCqX-F0wcqK1Wif0-dCA8hvAEYg99vjz';
 
-const getCsvUrl = (sheetId: string, sheetName: string) => 
-  `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
+const getCsvUrl = (sheetId: string, sheetName: string) => {
+  // If it's a published URL ID (starts with 2PACX)
+  if (sheetId.startsWith('2PACX')) {
+    return `https://docs.google.com/spreadsheets/d/e/${sheetId}/pub?output=csv&sheet=${encodeURIComponent(sheetName)}`;
+  }
+  // Standard sheet ID
+  return `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&sheet=${encodeURIComponent(sheetName)}`;
+};
 
 const fetchCsv = async (sheetId: string, sheetName: string): Promise<any[]> => {
   const url = getCsvUrl(sheetId, sheetName);
@@ -20,10 +26,14 @@ const fetchCsv = async (sheetId: string, sheetName: string): Promise<any[]> => {
       transformHeader: (header) => header.trim().toLowerCase().replace(/\s+/g, '_'),
       complete: (results: Papa.ParseResult<any>) => {
         if (results.data && results.data.length > 0) {
-          console.log(`Sheet "${sheetName}" headers:`, Object.keys(results.data[0]));
-          console.log(`Sheet "${sheetName}" first row:`, results.data[0]);
-        } else {
-          console.warn(`Sheet "${sheetName}" is empty.`);
+          const headers = Object.keys(results.data[0]);
+          console.log(`Sheet "${sheetName}" headers:`, headers);
+          
+          // CRITICAL CHECK: If a match sheet looks like the teams sheet, Google is returning the wrong tab
+          if (sheetName !== 'Teams' && headers.includes('pool') && !headers.includes('team_1') && !headers.includes('team1')) {
+            console.error(`ERROR: Sheet "${sheetName}" is returning TEAMS data instead of MATCH data. 
+            Check "Publish to the Web" settings and ensure "Entire Document" is selected.`);
+          }
         }
         resolve(results.data);
       },
@@ -185,7 +195,7 @@ const calculateStandings = (teams: Team[], matches: Match[]): Standing[] => {
   const standingsMap: Record<string, Standing> = {};
   
   teams.forEach(t => {
-    standingsMap[t.name] = {
+    standingsMap[t.name.trim()] = {
       teamName: t.name,
       matchWins: 0,
       matchLosses: 0,
@@ -197,8 +207,8 @@ const calculateStandings = (teams: Team[], matches: Match[]): Standing[] => {
   });
 
   matches.filter(m => m.status === 'completed').forEach(m => {
-    const t1 = standingsMap[m.team1];
-    const t2 = standingsMap[m.team2];
+    const t1 = standingsMap[m.team1.trim()];
+    const t2 = standingsMap[m.team2.trim()];
     if (!t1 || !t2) return;
 
     if ((m.matchScore1 || 0) > (m.matchScore2 || 0)) {
