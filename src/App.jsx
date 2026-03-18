@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/public/Home';
 import TeamList from './pages/public/TeamList';
 import Pool from './pages/public/Pool';
@@ -13,7 +13,7 @@ import AdminBracketScores from './pages/admin/BracketScores';
 
 function App() {
   return (
-    <Router basename="/tournament">
+    <Router>
       <div className="min-h-screen bg-gray-100">
         <Routes>
           <Route path="/" element={<Home />} />

@@ -149,6 +149,12 @@ const Home = () => {
             Change Age Group
           </button>
         )}
+
+        <div className="mt-auto pt-12 text-center">
+          <Link to="/admin" className="text-[10px] text-gray-300 font-bold uppercase tracking-widest hover:text-tvvc-blue transition-colors">
+            Tournament Management
+          </Link>
+        </div>
       </div>
     </Layout>
   );
