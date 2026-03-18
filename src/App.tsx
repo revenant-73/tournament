@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { fetchTournamentData } from './services/dataService'
 import type { TournamentData } from './types/tournament'
-import { Trophy, Users, LayoutGrid } from 'lucide-react'
+import { Trophy, Users, LayoutGrid, Settings } from 'lucide-react'
+import { Admin } from './components/Admin'
 import './App.css'
 
 function App() {
   const [data, setData] = useState<TournamentData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState<{ type: 'home' | 'teams' | 'pool' | 'bracket', id?: string }>({ type: 'home' })
+  const [view, setView] = useState<{ type: 'home' | 'teams' | 'pool' | 'bracket' | 'admin', id?: string }>({ type: 'home' })
 
   useEffect(() => {
     const loadData = async () => {
@@ -24,7 +25,7 @@ function App() {
   }, [])
 
   if (loading) return <div className="loading">Loading tournament data...</div>
-  if (!data) return <div className="error">Failed to load data. Check Google Sheet ID.</div>
+  if (!data) return <div className="error">Failed to load data. Check database connection.</div>
 
   const bracketNames = Array.from(new Set(data.bracket.map(b => b.bracketName)))
 
@@ -46,6 +47,9 @@ function App() {
           </button>
           <button className={view.type === 'teams' ? 'active' : ''} onClick={() => setView({ type: 'teams' })}>
             <Users size={18} /> Teams
+          </button>
+          <button className={view.type === 'admin' ? 'active' : ''} onClick={() => setView({ type: 'admin' })}>
+            <Settings size={18} /> Admin
           </button>
         </div>
       </header>
@@ -253,6 +257,12 @@ function App() {
                   })}
               </div>
             </div>
+            <button className="back-button" onClick={() => setView({ type: 'home' })}>Back to Home</button>
+          </div>
+        )}
+        {view.type === 'admin' && (
+          <div className="admin-view">
+            <Admin />
             <button className="back-button" onClick={() => setView({ type: 'home' })}>Back to Home</button>
           </div>
         )}
