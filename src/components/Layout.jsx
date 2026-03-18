@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const Layout = ({ children, title }) => {
+const Layout = ({ children, title, isAdmin = false }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col max-w-lg mx-auto shadow-xl">
-      <header className="bg-tvvc-blue text-white p-4 flex items-center justify-between">
+    <div className={`min-h-screen bg-gray-50 flex flex-col mx-auto shadow-xl ${isAdmin ? 'max-w-6xl' : 'max-w-lg'}`}>
+      <header className="bg-tvvc-blue text-white p-4 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-2">
           <button 
             onClick={() => navigate(-1)} 

@@ -66,10 +66,10 @@ const Setup = () => {
     setSaving(false);
   };
 
-  if (loading) return <Layout title="Setup"><div className="p-8 text-center">Loading Setup...</div></Layout>;
+  if (loading) return <Layout title="Setup" isAdmin={true}><div className="p-8 text-center">Loading Setup...</div></Layout>;
 
   return (
-    <Layout title="Tournament Setup">
+    <Layout title="Tournament Setup" isAdmin={true}>
       <div className="flex flex-col gap-6 py-2">
         {/* Tab Navigation */}
         <div className="flex border-b border-gray-200 overflow-x-auto no-scrollbar">

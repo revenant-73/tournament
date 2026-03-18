@@ -136,36 +136,39 @@ const Seeding = () => {
   };
 
   return (
-    <Layout title="Bracket Seeding">
-      <div className="flex flex-col gap-8 py-2">
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Age Group</label>
-          <select value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
-            {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-          </select>
+    <Layout title="Bracket Seeding" isAdmin={true}>
+      <div className="flex flex-col gap-8 py-2 lg:grid lg:grid-cols-[400px_1fr] lg:gap-12 lg:items-start">
+        <div className="flex flex-col gap-8 lg:sticky lg:top-24">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Age Group</label>
+            <select value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
+              {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select>
+          </div>
+
+          {/* Ranked Teams List */}
+          <section>
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Cross-Pool Rankings</h3>
+            <div className="flex flex-col gap-2 max-h-60 lg:max-h-[500px] overflow-y-auto no-scrollbar border p-2 rounded-xl bg-gray-50/50">
+              {rankedTeams.map((team, idx) => (
+                <button
+                  key={team.id}
+                  onClick={() => setSelectedTeam(team)}
+                  className={`p-3 rounded-lg border text-sm flex justify-between items-center transition-all ${
+                    selectedTeam?.id === team.id ? 'bg-tvvc-orange text-white border-tvvc-orange' : 'bg-white border-gray-100 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="font-bold">{idx + 1}. {team.name}</span>
+                  <span className="text-[10px] opacity-80 font-mono">{team.matchesWon}W {team.setsWon}S</span>
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
 
-        {/* Ranked Teams List */}
-        <section>
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Cross-Pool Rankings</h3>
-          <div className="flex flex-col gap-2 max-h-60 overflow-y-auto no-scrollbar border p-2 rounded-xl bg-gray-50/50">
-            {rankedTeams.map((team, idx) => (
-              <button
-                key={team.id}
-                onClick={() => setSelectedTeam(team)}
-                className={`p-3 rounded-lg border text-sm flex justify-between items-center transition-all ${
-                  selectedTeam?.id === team.id ? 'bg-tvvc-orange text-white border-tvvc-orange' : 'bg-white border-gray-100 hover:border-gray-300'
-                }`}
-              >
-                <span className="font-bold">{idx + 1}. {team.name}</span>
-                <span className="text-[10px] opacity-80 font-mono">{team.matchesWon}W {team.setsWon}S</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
         {/* Brackets Seeding Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-8">
+          <div className="grid grid-cols-2 gap-6">
           {['gold', 'silver'].map(bracket => (
             <div key={bracket} className="flex flex-col gap-3">
               <h4 className={`text-xs font-black uppercase tracking-tighter text-center ${bracket === 'gold' ? 'text-tvvc-blue' : 'text-gray-400'}`}>

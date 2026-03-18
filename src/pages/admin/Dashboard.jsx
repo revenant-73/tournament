@@ -39,10 +39,10 @@ const Dashboard = () => {
   if (loading) return <Layout title="Admin"><div className="p-8 text-center">Loading Admin...</div></Layout>;
 
   return (
-    <Layout title="Admin Dashboard">
-      <div className="flex flex-col gap-8 py-4">
+    <Layout title="Admin Dashboard" isAdmin={true}>
+      <div className="flex flex-col gap-8 py-4 lg:grid lg:grid-cols-2 lg:gap-12">
         {/* Tournament Info Section */}
-        <section className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+        <section className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden lg:col-span-2">
           <div className="absolute top-0 right-0 p-4">
             <button onClick={handleLogout} className="text-xs text-red-500 font-bold uppercase tracking-widest hover:text-red-600 transition-colors">
               Logout

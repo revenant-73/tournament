@@ -109,26 +109,28 @@ const PoolScores = () => {
   };
 
   return (
-    <Layout title="Pool Score Entry">
-      <div className="flex flex-col gap-6 py-2">
+    <Layout title="Pool Score Entry" isAdmin={true}>
+      <div className="flex flex-col gap-6 py-2 lg:grid lg:grid-cols-[300px_1fr] lg:items-start lg:gap-12">
         {/* Selectors */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Age Group</label>
-            <select value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
-              {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Pool</label>
-            <select value={selectedPoolId} onChange={e => setSelectedPoolId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
-              {pools.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+        <div className="flex flex-col gap-6 lg:sticky lg:top-24">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Age Group</label>
+              <select value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
+                {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Pool</label>
+              <select value={selectedPoolId} onChange={e => setSelectedPoolId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
+                {pools.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Match List */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2">
           {matches.map(match => (
             <button 
               key={match.id}

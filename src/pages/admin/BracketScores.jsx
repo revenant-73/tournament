@@ -137,24 +137,26 @@ const BracketScores = () => {
   };
 
   return (
-    <Layout title="Bracket Score Entry">
-      <div className="flex flex-col gap-6 py-2">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Age Group</label>
-            <select value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
-              {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Bracket</label>
-            <select value={selectedBracketId} onChange={e => setSelectedBracketId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
-              {brackets.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
+    <Layout title="Bracket Score Entry" isAdmin={true}>
+      <div className="flex flex-col gap-6 py-2 lg:grid lg:grid-cols-[300px_1fr] lg:items-start lg:gap-12">
+        <div className="flex flex-col gap-6 lg:sticky lg:top-24">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Age Group</label>
+              <select value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
+                {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Bracket</label>
+              <select value={selectedBracketId} onChange={e => setSelectedBracketId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
+                {brackets.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2">
           {matches.map(match => (
             <button 
               key={match.id}

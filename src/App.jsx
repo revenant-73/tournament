@@ -14,7 +14,7 @@ import AdminBracketScores from './pages/admin/BracketScores';
 function App() {
   return (
     <Router basename="/tournament">
-      <div className="min-h-screen bg-gray-50 max-w-lg mx-auto shadow-xl">
+      <div className="min-h-screen bg-gray-100">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/pool/:id" element={<Pool />} />
