@@ -151,36 +151,49 @@ function App() {
 
                 <div className="card">
                   <h3>{pool.name} Matches</h3>
-                  <div className="matches-list">
-                    {pool.matches.map(match => (
-                      <div key={match.id} className="match-card">
-                        <div className="match-header">
-                          <span className="match-time">{match.id} | {match.time} - Court {match.court}</span>
-                          <span className={`badge badge-${match.status}`}>{match.status}</span>
-                        </div>
-                        {match.workTeam && (
-                          <div className="work-team-info">
-                            Work: {match.workTeam}
-                          </div>
-                        )}
-                        <div className="match-teams">
-                          <div className={`team-row ${(match.matchScore1 || 0) > (match.matchScore2 || 0) ? 'winner' : ''}`}>
-                            <span className="team-name">{match.team1}</span>
-                            <div className="sets">
-                              {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score1}</span>)}
-                              <span className="match-score">({match.matchScore1})</span>
+                  <div className="matches-list-compact">
+                    {pool.matches.map(match => {
+                      const isT1Winner = (match.matchScore1 || 0) > (match.matchScore2 || 0);
+                      const isT2Winner = (match.matchScore2 || 0) > (match.matchScore1 || 0);
+                      
+                      // If no sets exist but teams exist, show 0-0 for first 2 sets
+                      const displaySets = match.sets && match.sets.length > 0 
+                        ? match.sets 
+                        : (match.team1 || match.team2 ? [{score1: 0, score2: 0}, {score1: 0, score2: 0}] : []);
+
+                      return (
+                        <div key={match.id} className="match-row-compact">
+                          <div className="match-main-info">
+                            <span className="match-id-label">{match.id}</span>
+                            <span className="match-time-court">{match.time} | Crt {match.court}</span>
+                            
+                            <div className="match-teams-vs">
+                              <span className={`team-name-compact ${isT1Winner ? 'winner-underline' : ''}`}>
+                                {match.team1}
+                              </span>
+                              <span className="vs-label">vs</span>
+                              <span className={`team-name-compact ${isT2Winner ? 'winner-underline' : ''}`}>
+                                {match.team2}
+                              </span>
                             </div>
+
+                            {match.workTeam && (
+                              <span className="work-team-compact">
+                                (Work: {match.workTeam})
+                              </span>
+                            )}
                           </div>
-                          <div className={`team-row ${(match.matchScore2 || 0) > (match.matchScore1 || 0) ? 'winner' : ''}`}>
-                            <span className="team-name">{match.team2}</span>
-                            <div className="sets">
-                              {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score2}</span>)}
-                              <span className="match-score">({match.matchScore2})</span>
-                            </div>
+
+                          <div className="match-scores-compact">
+                            {displaySets.map((s, i) => (
+                              <span key={i} className="set-box-compact">
+                                {s.score1}-{s.score2}
+                              </span>
+                            ))}
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               </div>
@@ -196,34 +209,44 @@ function App() {
               <div className="grid">
                 {data.bracket
                   .filter(b => b.bracketName === view.id)
-                  .map(match => (
-                    <div key={match.id} className="match-card bracket-match">
-                      <div className="match-header">
-                        <span className="round-label">{match.round} - {match.label}</span>
-                      </div>
-                      {match.workTeam && (
-                        <div className="work-team-info">
-                          Work: {match.workTeam}
-                        </div>
-                      )}
-                      <div className="match-teams">
-                        <div className={`team-row ${match.winner === match.team1 || (match.matchScore1 || 0) > (match.matchScore2 || 0) ? 'winner' : ''}`}>
-                          <span className="team-name">{match.team1}</span>
-                          <div className="sets">
-                            {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score1}</span>)}
-                            <span className="match-score">{match.matchScore1}</span>
+                  .map(match => {
+                    const isT1Winner = match.winner === match.team1 || (match.matchScore1 || 0) > (match.matchScore2 || 0);
+                    const isT2Winner = match.winner === match.team2 || (match.matchScore2 || 0) > (match.matchScore1 || 0);
+                    const displaySets = match.sets && match.sets.length > 0 ? match.sets : (match.team1 || match.team2 ? [{score1: 0, score2: 0}, {score1: 0, score2: 0}] : []);
+
+                    return (
+                      <div key={match.id} className="match-row-compact bracket-row">
+                        <div className="match-main-info">
+                          <span className="match-id-label">{match.round}</span>
+                          <span className="match-time-court">{match.label}</span>
+                          
+                          <div className="match-teams-vs">
+                            <span className={`team-name-compact ${isT1Winner ? 'winner-underline' : ''}`}>
+                              {match.team1}
+                            </span>
+                            <span className="vs-label">vs</span>
+                            <span className={`team-name-compact ${isT2Winner ? 'winner-underline' : ''}`}>
+                              {match.team2}
+                            </span>
                           </div>
+
+                          {match.workTeam && (
+                            <span className="work-team-compact">
+                              (Work: {match.workTeam})
+                            </span>
+                          )}
                         </div>
-                        <div className={`team-row ${match.winner === match.team2 || (match.matchScore2 || 0) > (match.matchScore1 || 0) ? 'winner' : ''}`}>
-                          <span className="team-name">{match.team2}</span>
-                          <div className="sets">
-                            {match.sets?.map((s, i) => <span key={i} className="set-score">{s.score2}</span>)}
-                            <span className="match-score">{match.matchScore2}</span>
-                          </div>
+
+                        <div className="match-scores-compact">
+                          {displaySets.map((s, i) => (
+                            <span key={i} className="set-box-compact">
+                              {s.score1}-{s.score2}
+                            </span>
+                          ))}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
               </div>
             </div>
             <button className="back-button" onClick={() => setView({ type: 'home' })}>Back to Home</button>

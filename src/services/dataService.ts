@@ -123,8 +123,8 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
         
         return {
           id: m.match_id || m.id || Math.random().toString(),
-          team1: (m.team_1 || m.team1 || 'TBD').trim(),
-          team2: (m.team_2 || m.team2 || 'TBD').trim(),
+          team1: (m.team_1 || m.team1 || '').trim(),
+          team2: (m.team_2 || m.team2 || '').trim(),
           sets,
           matchScore1: m1,
           matchScore2: m2,
@@ -172,13 +172,13 @@ export const fetchTournamentData = async (sheetId?: string): Promise<TournamentD
           id: b.match_id || b.id || Math.random().toString(),
           round: b.round || '', 
           label: b.label || b.match_label || '',
-          team1: b.team_1 || b.team1 || 'TBD',
-          team2: b.team_2 || b.team2 || 'TBD',
+          team1: (b.team_1 || b.team1 || '').trim(),
+          team2: (b.team_2 || b.team2 || '').trim(),
           sets,
           matchScore1: m1,
           matchScore2: m2,
           winner: b.winner || '',
-          workTeam: b.work_team || b.workteam || '',
+          workTeam: (b.work_team || b.workteam || '').trim(),
           bracketName: name
         });
       });
