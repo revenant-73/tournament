@@ -15,15 +15,24 @@ const BracketScreen = () => {
       if (!selectedAgeGroupId) return;
 
       // 1. Fetch matches for this bracket
+      // First, find the bracket ID if 'id' is 'gold' or 'silver'
+      let bracketId = id;
+      if (id.toLowerCase() === 'gold' || id.toLowerCase() === 'silver') {
+        const { data: bData } = await supabase
+          .from('brackets')
+          .select('id')
+          .eq('age_group_id', selectedAgeGroupId)
+          .ilike('name', id)
+          .single();
+        if (bData) bracketId = bData.id;
+      }
+
       const { data: matchesData } = await supabase
         .from('matches')
-        .select(`
-          *,
-          bracket:brackets!inner(name)
-        `)
+        .select(`*`)
         .eq('age_group_id', selectedAgeGroupId)
         .eq('match_type', 'bracket')
-        .ilike('brackets.name', id)
+        .eq('bracket_id', bracketId)
         .order('bracket_round', { ascending: true })
         .order('bracket_position', { ascending: true });
 

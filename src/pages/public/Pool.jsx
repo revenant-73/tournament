@@ -45,7 +45,7 @@ const PoolScreen = () => {
     // Subscribe to realtime updates for matches
     const subscription = supabase
       .channel(`pool-${id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches', filter: `pool_id=eq.${id}` }, 
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, 
         () => fetchPoolData()
       )
       .subscribe();
@@ -116,7 +116,7 @@ const PoolScreen = () => {
                       {isComplete ? (
                         <div className="text-xl font-black text-gray-900">
                           {match.set1_team1 + match.set2_team1 + (match.set3_team1 || 0) > 
-                           match.set1_team2 + match.set2_team2 + (match.set3_team2 || 0) ? '2 - ' : ' - 2'}
+                           match.set1_team2 + match.set2_team2 + (match.set3_team2 || 0) ? '2 - 0' : '0 - 2'}
                         </div>
                       ) : (
                         <div className="text-xs font-bold text-gray-300 italic">vs</div>
