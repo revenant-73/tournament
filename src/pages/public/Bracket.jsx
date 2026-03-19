@@ -79,32 +79,36 @@ const BracketScreen = () => {
           const roundMatches = matches.filter(m => m.bracket_round === roundNum);
           if (roundMatches.length === 0) return null;
 
-          const roundTitle = roundNum === 1 ? 'Quarterfinals' : roundNum === 2 ? 'Semifinals' : 'Final';
+          const roundTitle = roundNum === 1 ? 'Quarterfinals' : roundNum === 2 ? 'Semifinals' : 'Championship';
 
           return (
             <section key={roundNum}>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6 px-2 text-center">{roundTitle}</h3>
-              <div className="flex flex-col gap-6">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6 px-2 text-center">{roundTitle}</h3>
+              <div className="flex flex-col gap-6 max-w-sm mx-auto w-full px-4">
                 {roundMatches.map(match => (
-                  <div key={match.id} className="relative">
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                  <div key={match.id} className="relative group">
+                    <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden transition-all hover:shadow-md">
                       {/* Team 1 */}
-                      <div className={`p-3 flex justify-between items-center border-b border-gray-50 ${match.winner_id === match.team1_id ? 'bg-blue-50' : ''}`}>
-                        <span className={`font-bold truncate ${match.winner_id === match.team1_id ? 'text-tvvc-blue' : 'text-gray-600'}`}>
+                      <div className={`p-5 flex justify-between items-center border-b border-slate-50 ${match.winner_id === match.team1_id ? 'bg-teal-50/30' : ''}`}>
+                        <span className={`font-black uppercase italic tracking-tighter truncate text-sm ${match.winner_id === match.team1_id ? 'text-tvvc-teal' : 'text-slate-400'}`}>
                           {teams[match.team1_id] || (match.bracket_round === 1 ? 'BYE' : 'TBD')}
                         </span>
-                        <span className="font-mono text-sm font-bold">
-                          {match.status === 'complete' ? (match.set1_team1 + match.set2_team1 + (match.set3_team1 || 0) > match.set1_team2 + match.set2_team2 + (match.set3_team2 || 0) ? 'W' : 'L') : ''}
-                        </span>
+                        {match.status === 'complete' && (
+                          <span className={`font-black text-xs ${match.winner_id === match.team1_id ? 'text-tvvc-teal' : 'text-slate-300'}`}>
+                            {match.set1_team1 + match.set2_team1 + (match.set3_team1 || 0) > match.set1_team2 + match.set2_team2 + (match.set3_team2 || 0) ? 'WIN' : 'LOSS'}
+                          </span>
+                        )}
                       </div>
                       {/* Team 2 */}
-                      <div className={`p-3 flex justify-between items-center ${match.winner_id === match.team2_id ? 'bg-blue-50' : ''}`}>
-                        <span className={`font-bold truncate ${match.winner_id === match.team2_id ? 'text-tvvc-blue' : 'text-gray-600'}`}>
+                      <div className={`p-5 flex justify-between items-center ${match.winner_id === match.team2_id ? 'bg-teal-50/30' : ''}`}>
+                        <span className={`font-black uppercase italic tracking-tighter truncate text-sm ${match.winner_id === match.team2_id ? 'text-tvvc-teal' : 'text-slate-400'}`}>
                           {teams[match.team2_id] || (match.bracket_round === 1 ? 'BYE' : 'TBD')}
                         </span>
-                        <span className="font-mono text-sm font-bold">
-                          {match.status === 'complete' ? (match.set1_team2 + match.set2_team2 + (match.set3_team2 || 0) > match.set1_team1 + match.set2_team1 + (match.set3_team1 || 0) ? 'W' : 'L') : ''}
-                        </span>
+                        {match.status === 'complete' && (
+                          <span className={`font-black text-xs ${match.winner_id === match.team2_id ? 'text-tvvc-teal' : 'text-slate-300'}`}>
+                            {match.set1_team2 + match.set2_team2 + (match.set3_team2 || 0) > match.set1_team1 + match.set2_team1 + (match.set3_team1 || 0) ? 'WIN' : 'LOSS'}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

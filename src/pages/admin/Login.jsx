@@ -45,29 +45,29 @@ const Login = () => {
 
   return (
     <Layout title="Admin Login">
-      <div className="max-w-xs mx-auto py-12 flex flex-col gap-8">
+      <div className="max-w-xs mx-auto py-16 flex flex-col gap-10">
         <div className="text-center">
-          <div className="bg-tvvc-blue w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-white text-2xl mb-4">
-            🔒
+          <div className="bg-tvvc-black w-24 h-24 rounded-[2rem] mx-auto flex items-center justify-center text-white text-4xl mb-6 shadow-2xl shadow-slate-200 border-4 border-white">
+            <span className="text-tvvc-teal italic font-black">T</span>
           </div>
-          <h2 className="text-xl font-bold text-gray-900">Tournament Director</h2>
-          <p className="text-sm text-gray-500">Enter password to manage event</p>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">Director Login</h2>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Tournament Management</p>
         </div>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <form onSubmit={handleLogin} className="flex flex-col gap-5">
           <div>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Admin Password"
-              className="w-full p-4 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-tvvc-blue focus:outline-none"
+              className="w-full p-5 bg-white border border-slate-100 rounded-2xl shadow-sm focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal focus:outline-none font-bold text-center text-lg transition-all"
               required
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-medium text-center border border-red-100">
+            <div className="bg-rose-50 text-rose-600 p-4 rounded-xl text-xs font-bold text-center border border-rose-100 uppercase tracking-wide">
               {error}
             </div>
           )}
@@ -75,7 +75,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="btn btn-primary w-full py-4 text-lg disabled:opacity-50"
+            className="btn btn-primary w-full py-5 text-sm uppercase tracking-[0.2em] font-black disabled:opacity-50 shadow-xl shadow-teal-500/20"
           >
             {loading ? 'Verifying...' : 'Access Dashboard'}
           </button>

@@ -1,25 +1,28 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTournament } from '../context/TournamentContext';
 
 const Layout = ({ children, title, isAdmin = false }) => {
   const navigate = useNavigate();
+  const { tournament } = useTournament();
 
   return (
-    <div className={`min-h-screen bg-gray-50 flex flex-col mx-auto shadow-xl ${isAdmin ? 'max-w-6xl' : 'max-w-lg'}`}>
-      <header className="bg-tvvc-blue text-white p-4 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-2">
+    <div className={`min-h-screen bg-slate-50 flex flex-col mx-auto shadow-2xl ${isAdmin ? 'max-w-6xl' : 'max-w-md'}`}>
+      <header className="bg-tvvc-black text-white p-6 flex items-center justify-between sticky top-0 z-40 border-b border-white/5">
+        <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate(-1)} 
-            className="p-1 hover:bg-white/10 rounded"
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
           >
             ←
           </button>
-          <Link to="/" className="text-xl font-bold italic uppercase tracking-wider">
-            TVVC
+          <Link to="/" className="text-xl font-black italic uppercase tracking-tighter">
+            <span className="text-tvvc-teal">{tournament?.name?.charAt(0) || 'T'}</span>
+            {tournament?.name?.slice(1) || 'VVC'}
           </Link>
         </div>
-        <h1 className="text-lg font-semibold truncate">{title}</h1>
-        <div className="w-8"></div> {/* Spacer for balance */}
+        <h1 className="text-sm font-bold uppercase tracking-widest opacity-80 truncate">{title}</h1>
+        <div className="w-10"></div> {/* Spacer for balance */}
       </header>
       
       <main className="flex-1 p-4">

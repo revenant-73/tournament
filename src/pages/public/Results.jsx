@@ -99,13 +99,13 @@ const Results = () => {
       <div className="flex flex-col gap-6 py-4 print:p-0">
         
         {/* Controls - Hidden during print */}
-        <div className="flex flex-col gap-4 print:hidden">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Age Group</label>
+        <div className="flex flex-col gap-5 print:hidden">
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-2">Select Division</label>
             <select 
               value={selectedAgeGroupId} 
               onChange={e => setSelectedAgeGroupId(e.target.value)}
-              className="p-3 border rounded-lg outline-none font-semibold bg-white"
+              className="p-4 bg-white border border-slate-100 rounded-2xl outline-none font-bold text-slate-800 transition-all shadow-sm focus:ring-4 focus:ring-tvvc-teal/10"
             >
               {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
@@ -113,34 +113,36 @@ const Results = () => {
 
           <button 
             onClick={handlePrint}
-            className="btn btn-primary flex items-center justify-center gap-2 py-3 shadow-lg"
+            className="btn btn-primary flex items-center justify-center gap-3 py-5 shadow-2xl shadow-teal-500/20 text-sm uppercase tracking-[0.2em]"
           >
-            PDF / Export Results
+            <span>📄</span> Export Tournament PDF
           </button>
         </div>
 
         {/* Results Container - Styled for Print */}
-        <div id="results-content" className="flex flex-col gap-8 print:gap-12">
+        <div id="results-content" className="flex flex-col gap-10 print:gap-12">
           
           {/* Header for Print */}
-          <div className="hidden print:flex flex-col items-center text-center border-b-2 border-tvvc-blue pb-6 mb-4">
-            <h1 className="text-4xl font-black italic text-tvvc-blue uppercase tracking-tighter">{tournament?.name}</h1>
-            <h2 className="text-xl font-bold text-tvvc-orange uppercase tracking-widest mt-1">Final Results • {currentAgeGroup?.name}</h2>
-            <p className="text-sm text-gray-500 mt-2 font-medium">
-              {tournament?.date && new Date(tournament.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-            </p>
+          <div className="hidden print:flex flex-col items-center text-center border-b-4 border-tvvc-black pb-8 mb-6">
+            <h1 className="text-5xl font-black italic text-tvvc-black uppercase tracking-tighter leading-none mb-2">
+              <span className="text-tvvc-teal">T</span>VVC TOURNAMENT
+            </h1>
+            <h2 className="text-2xl font-black text-slate-400 uppercase tracking-[0.4em] mt-2">{tournament?.name}</h2>
+            <div className="flex items-center gap-4 mt-4">
+              <span className="h-[2px] w-8 bg-tvvc-teal"></span>
+              <p className="text-sm text-slate-900 font-black uppercase tracking-widest italic">
+                {currentAgeGroup?.name} Division • Final Results
+              </p>
+              <span className="h-[2px] w-8 bg-tvvc-teal"></span>
+            </div>
           </div>
 
           {/* Pool Results */}
           <section className="print:break-inside-avoid">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2 print:text-tvvc-blue print:text-sm print:mb-4">Pool Standings</h3>
-            <div className="grid gap-6">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 px-2 print:text-tvvc-black print:text-xs print:mb-6">Pool Performance</h3>
+            <div className="grid gap-8">
               {data.pools.map(pool => {
                 const poolMatches = data.matches.filter(m => m.pool_id === pool.id);
-                // We need to find which teams are in this pool. In this simple schema, pool_teams junction is used.
-                // But for results page, we can infer teams from the matches in the pool if needed, 
-                // or fetch pool_teams. Let's assume we have them or can filter them.
-                // To keep it simple and efficient, let's filter teams that participated in pool matches.
                 const teamIdsInPool = new Set();
                 poolMatches.forEach(m => {
                   if (m.team1_id) teamIdsInPool.add(m.team1_id);
@@ -150,27 +152,27 @@ const Results = () => {
                 const standings = calculateStandings(teamsInPool, poolMatches);
 
                 return (
-                  <div key={pool.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden print:shadow-none print:border-gray-200">
-                    <div className="bg-gray-50 px-4 py-2 border-b border-gray-100 flex justify-between items-center print:bg-gray-100">
-                      <span className="font-bold text-tvvc-blue">{pool.name}</span>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">{pool.court}</span>
+                  <div key={pool.id} className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden print:shadow-none print:border-slate-200">
+                    <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center print:bg-slate-50">
+                      <span className="font-black text-slate-900 uppercase italic tracking-tighter text-lg">{pool.name}</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{pool.court}</span>
                     </div>
                     <table className="w-full text-left text-sm">
-                      <thead className="bg-white border-b border-gray-50">
+                      <thead className="bg-white border-b border-slate-50">
                         <tr>
-                          <th className="px-4 py-2 font-bold text-gray-400 text-[10px] uppercase">Team</th>
-                          <th className="px-2 py-2 font-bold text-gray-400 text-[10px] uppercase text-center">W-L</th>
-                          <th className="px-2 py-2 font-bold text-gray-400 text-[10px] uppercase text-center">Sets</th>
-                          <th className="px-2 py-2 font-bold text-gray-400 text-[10px] uppercase text-center">Diff</th>
+                          <th className="px-6 py-4 font-black text-slate-300 text-[10px] uppercase tracking-widest">Team</th>
+                          <th className="px-2 py-4 font-black text-slate-300 text-[10px] uppercase tracking-widest text-center">W-L</th>
+                          <th className="px-2 py-4 font-black text-slate-300 text-[10px] uppercase tracking-widest text-center">Sets</th>
+                          <th className="px-2 py-4 font-black text-slate-300 text-[10px] uppercase tracking-widest text-center">+/-</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-50">
+                      <tbody className="divide-y divide-slate-50">
                         {standings.map((team, idx) => (
-                          <tr key={team.id} className={idx < 2 ? 'bg-blue-50/20' : ''}>
-                            <td className="px-4 py-3 font-bold text-gray-900">{team.name}</td>
-                            <td className="px-2 py-3 text-center font-bold text-tvvc-blue">{team.matchesWon}-{team.matchesLost}</td>
-                            <td className="px-2 py-3 text-center text-gray-600">{team.setsWon}-{team.setsLost}</td>
-                            <td className="px-2 py-3 text-center text-xs font-mono text-gray-500">{team.pointDifferential > 0 ? '+' : ''}{team.pointDifferential}</td>
+                          <tr key={team.id} className={idx < 2 ? 'bg-teal-50/10' : ''}>
+                            <td className="px-6 py-5 font-black text-slate-800 uppercase italic tracking-tighter">{team.name}</td>
+                            <td className="px-2 py-5 text-center font-black text-tvvc-teal">{team.matchesWon}-{team.matchesLost}</td>
+                            <td className="px-2 py-5 text-center text-slate-500 font-bold">{team.setsWon}-{team.setsLost}</td>
+                            <td className="px-2 py-5 text-center text-[10px] font-black text-slate-400">{team.pointDifferential > 0 ? '+' : ''}{team.pointDifferential}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -183,8 +185,8 @@ const Results = () => {
 
           {/* Bracket Results */}
           <section className="print:break-inside-avoid">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2 print:text-tvvc-blue print:text-sm print:mb-4">Bracket Winners</h3>
-            <div className="grid gap-4">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 px-2 print:text-tvvc-black print:text-xs print:mb-6">Podium Finishers</h3>
+            <div className="grid gap-6">
               {data.brackets.map(bracket => {
                 const finalMatch = data.matches.find(m => 
                   m.bracket_id === bracket.id && 
@@ -196,16 +198,19 @@ const Results = () => {
                 const runnerUp = finalMatch ? data.teams.find(t => t.id === (finalMatch.winner_id === finalMatch.team1_id ? finalMatch.team2_id : finalMatch.team1_id)) : null;
 
                 return (
-                  <div key={bracket.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 print:shadow-none print:border-gray-200">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl font-black ${bracket.name.toLowerCase() === 'gold' ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-500'}`}>
+                  <div key={bracket.id} className="bg-tvvc-black p-8 rounded-[2.5rem] shadow-xl border border-slate-100 print:shadow-none print:bg-slate-50 print:border-slate-200 group">
+                    <div className="flex items-center gap-8">
+                      <div className={`w-20 h-20 rounded-[1.5rem] flex items-center justify-center text-4xl font-black shadow-2xl transition-transform group-hover:scale-110 ${bracket.name.toLowerCase() === 'gold' ? 'bg-tvvc-teal text-white shadow-teal-500/20' : 'bg-tvvc-coral text-white shadow-rose-500/20'}`}>
                         {bracket.name.toLowerCase() === 'gold' ? '🥇' : '🥈'}
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-black text-lg text-gray-900 uppercase italic tracking-tight">{bracket.name} CHAMPIONS</h4>
-                        <p className="text-tvvc-blue font-bold text-xl">{winner?.name || 'In Progress'}</p>
+                        <h4 className="font-black text-[10px] text-white/40 uppercase tracking-[0.3em] mb-2">{bracket.name} CHAMPIONS</h4>
+                        <p className="text-white font-black text-3xl italic uppercase tracking-tighter leading-none mb-3">{winner?.name || 'In Progress'}</p>
                         {runnerUp && (
-                          <p className="text-xs text-gray-400 font-bold uppercase mt-1">Runner Up: {runnerUp.name}</p>
+                          <div className="flex items-center gap-2">
+                             <span className="text-[10px] text-white/20 font-black uppercase tracking-widest italic">Runner Up:</span>
+                             <span className="text-xs text-white/60 font-black uppercase tracking-tight">{runnerUp.name}</span>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -216,8 +221,8 @@ const Results = () => {
           </section>
 
           {/* Footer for Print */}
-          <div className="hidden print:block mt-auto pt-12 text-center text-[10px] text-gray-400 font-bold uppercase tracking-[0.3em]">
-            Tournament Results Powered by TVVC
+          <div className="hidden print:block mt-auto pt-16 text-center text-[10px] text-slate-300 font-black uppercase tracking-[0.5em]">
+            Official Tournament Document • TVVC Volleyball
           </div>
         </div>
       </div>
@@ -225,13 +230,14 @@ const Results = () => {
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           body { background: white !important; }
-          .bg-tvvc-blue { color: #1e3a8a !important; }
-          .text-tvvc-blue { color: #1e3a8a !important; }
-          .text-tvvc-orange { color: #f97316 !important; }
+          .bg-tvvc-black { background: #0f172a !important; color: white !important; -webkit-print-color-adjust: exact; }
+          .text-tvvc-teal { color: #14b8a6 !important; -webkit-print-color-adjust: exact; }
+          .bg-tvvc-teal { background: #14b8a6 !important; -webkit-print-color-adjust: exact; }
+          .bg-tvvc-coral { background: #f43f5e !important; -webkit-print-color-adjust: exact; }
           nav, footer, .print\\:hidden { display: none !important; }
           header { display: none !important; }
           main { padding: 0 !important; }
-          .shadow-sm, .shadow-lg { shadow: none !important; }
+          .shadow-sm, .shadow-xl, .shadow-2xl { box-shadow: none !important; }
           #results-content { width: 100% !important; margin: 0 !important; padding: 0 !important; }
         }
       `}} />

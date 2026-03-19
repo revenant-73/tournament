@@ -3,26 +3,27 @@
 @tailwind utilities;
 
 :root {
-  --tvvc-blue: #004a99;
-  --tvvc-orange: #f37021;
+  --tvvc-teal: #14b8a6;
+  --tvvc-coral: #f43f5e;
+  --tvvc-black: #0f172a;
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 font-sans;
+  @apply bg-slate-50 text-slate-900 font-sans antialiased;
 }
 
 .btn {
-  @apply px-4 py-2 rounded font-semibold transition-colors;
+  @apply px-5 py-2.5 rounded-lg font-bold tracking-wide transition-all duration-200 transform active:scale-[0.98];
 }
 
 .btn-primary {
-  @apply bg-blue-700 text-white hover:bg-blue-800;
+  @apply bg-tvvc-teal text-white shadow-lg shadow-teal-500/20 hover:bg-tvvc-teal-dark hover:-translate-y-0.5;
 }
 
 .btn-secondary {
-  @apply bg-orange-500 text-white hover:bg-orange-600;
+  @apply bg-tvvc-coral text-white shadow-lg shadow-rose-500/20 hover:bg-tvvc-coral-dark hover:-translate-y-0.5;
 }
 
 .card {
-  @apply bg-white p-4 rounded shadow-sm border border-gray-200;
+  @apply bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md;
 }

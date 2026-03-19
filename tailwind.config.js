@@ -8,9 +8,12 @@ export default {
     extend: {
       colors: {
         tvvc: {
-          blue: '#004a99',
-          orange: '#f37021',
-          gold: '#ffd700',
+          teal: '#14b8a6',
+          coral: '#f43f5e',
+          black: '#0f172a',
+          white: '#ffffff',
+          'teal-dark': '#0f766e',
+          'coral-dark': '#e11d48',
         }
       }
     },

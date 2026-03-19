@@ -156,73 +156,73 @@ const BracketScores = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2">
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2">
           {matches.map(match => (
             <button 
               key={match.id}
               onClick={() => handleEdit(match)}
-              className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-2 text-left active:bg-gray-50"
+              className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col gap-4 text-left active:scale-[0.98] transition-all hover:shadow-md"
             >
-              <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                <span>R{match.bracket_round} - P{match.bracket_position}</span>
-                <span className={match.status === 'complete' ? 'text-green-500' : 'text-tvvc-orange'}>{match.status}</span>
+              <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                <span>R{match.bracket_round} • P{match.bracket_position}</span>
+                <span className={match.status === 'complete' ? 'text-tvvc-teal' : 'text-tvvc-coral animate-pulse'}>{match.status === 'complete' ? 'COMPLETE' : 'PENDING'}</span>
               </div>
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-                <span className={`text-right font-bold truncate ${match.winner_id === match.team1_id ? 'text-tvvc-blue' : ''}`}>
+                <span className={`text-right font-black truncate uppercase italic tracking-tighter text-lg ${match.winner_id === match.team1_id ? 'text-tvvc-teal' : 'text-slate-800'}`}>
                   {teams[match.team1_id] || (match.source_match1_id ? 'TBD' : 'BYE')}
                 </span>
-                <span className="text-xs text-gray-300 italic">vs</span>
-                <span className={`text-left font-bold truncate ${match.winner_id === match.team2_id ? 'text-tvvc-blue' : ''}`}>
+                <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full italic">vs</span>
+                <span className={`text-left font-black truncate uppercase italic tracking-tighter text-lg ${match.winner_id === match.team2_id ? 'text-tvvc-teal' : 'text-slate-800'}`}>
                   {teams[match.team2_id] || (match.source_match2_id ? 'TBD' : 'BYE')}
                 </span>
               </div>
               {match.status === 'complete' && (
-                <div className="mt-2 pt-2 border-t border-gray-50 flex justify-center gap-4 text-[11px] font-mono font-bold text-tvvc-blue">
-                  <span>{match.set1_team1}-{match.set1_team2}</span>
-                  <span>{match.set2_team1}-{match.set2_team2}</span>
-                  {match.set3_team1 > 0 && <span>{match.set3_team1}-{match.set3_team2}</span>}
+                <div className="mt-2 pt-4 border-t border-slate-50 flex justify-center gap-6 text-[10px] font-black text-tvvc-teal uppercase tracking-widest">
+                  <span className="bg-teal-50 px-3 py-1 rounded-lg">{match.set1_team1}-{match.set1_team2}</span>
+                  <span className="bg-teal-50 px-3 py-1 rounded-lg">{match.set2_team1}-{match.set2_team2}</span>
+                  {match.set3_team1 > 0 && <span className="bg-teal-50 px-3 py-1 rounded-lg">{match.set3_team1}-{match.set3_team2}</span>}
                 </div>
               )}
             </button>
           ))}
         </div>
 
-        {/* Edit Modal (Same as Pool) */}
+        {/* Edit Modal */}
         {editingMatch && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-            <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-              <div className="bg-tvvc-blue p-4 text-white">
-                <h3 className="font-bold text-center uppercase italic tracking-tighter">Enter Bracket Score</h3>
-                <p className="text-[10px] text-center opacity-80 uppercase font-bold mt-1 tracking-widest">
-                  {teams[editingMatch.team1_id] || 'TBD'} vs {teams[editingMatch.team2_id] || 'TBD'}
+          <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 backdrop-blur-md">
+            <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+              <div className="bg-tvvc-black p-8 text-white">
+                <h3 className="font-black text-center uppercase italic tracking-tighter text-xl leading-none">Bracket Score</h3>
+                <p className="text-[10px] text-center opacity-40 uppercase font-black mt-3 tracking-[0.2em]">
+                  {teams[editingMatch.team1_id] || 'TBD'} VS {teams[editingMatch.team2_id] || 'TBD'}
                 </p>
               </div>
               
-              <div className="p-6 flex flex-col gap-6">
+              <div className="p-8 flex flex-col gap-8">
                 {[1, 2, 3].map(setNum => (
-                  <div key={setNum} className="flex flex-col gap-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Set {setNum}</label>
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+                  <div key={setNum} className="flex flex-col gap-3">
+                    <label className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] text-center">Set {setNum}</label>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6">
                       <input 
                         type="number" 
                         value={scores[`s${setNum}t1`]}
                         onChange={e => setScores({...scores, [`s${setNum}t1`]: parseInt(e.target.value) || 0})}
-                        className="p-3 bg-gray-50 border rounded-xl text-center font-black text-xl text-tvvc-blue focus:ring-2 ring-tvvc-blue outline-none"
+                        className="p-5 bg-slate-50 border border-slate-100 rounded-2xl text-center font-black text-2xl text-tvvc-teal focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal focus:bg-white outline-none transition-all shadow-inner"
                       />
-                      <span className="text-gray-300 font-bold">—</span>
+                      <span className="text-slate-200 font-black">—</span>
                       <input 
                         type="number" 
                         value={scores[`s${setNum}t2`]}
                         onChange={e => setScores({...scores, [`s${setNum}t2`]: parseInt(e.target.value) || 0})}
-                        className="p-3 bg-gray-50 border rounded-xl text-center font-black text-xl text-tvvc-blue focus:ring-2 ring-tvvc-blue outline-none"
+                        className="p-5 bg-slate-50 border border-slate-100 rounded-2xl text-center font-black text-2xl text-tvvc-teal focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal focus:bg-white outline-none transition-all shadow-inner"
                       />
                     </div>
                   </div>
                 ))}
 
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  <button onClick={() => setEditingMatch(null)} className="btn bg-gray-100 text-gray-500 py-3 uppercase text-xs font-bold">Cancel</button>
-                  <button onClick={handleSave} className="btn btn-primary py-3 uppercase text-xs font-bold">Save & Advance</button>
+                <div className="flex flex-col gap-3 mt-4">
+                  <button onClick={handleSave} className="btn btn-primary py-5 uppercase text-[10px] font-black tracking-[0.3em] shadow-xl shadow-teal-500/20">Save & Advance</button>
+                  <button onClick={() => setEditingMatch(null)} className="text-[10px] font-black text-slate-300 uppercase tracking-widest py-3 hover:text-rose-400 transition-colors">Discard Changes</button>
                 </div>
               </div>
             </div>

@@ -80,17 +80,23 @@ const Home = () => {
   // Age group selection screen
   if (!selectedAgeGroupId && ageGroups.length > 1) {
     return (
-      <div className="min-h-screen bg-tvvc-blue flex flex-col items-center justify-center p-8">
-        <h1 className="text-4xl font-bold text-white mb-2 italic tracking-tighter uppercase">{tournament.name}</h1>
-        <h2 className="text-xl text-white/80 mb-12 font-medium tracking-tight uppercase">Tournament</h2>
+      <div className="min-h-screen bg-tvvc-black flex flex-col items-center justify-center p-8">
+        <div className="mb-16 text-center">
+          <h1 className="text-6xl font-black text-white mb-2 italic tracking-tighter uppercase leading-none">
+            <span className="text-tvvc-teal">T</span>VVC
+          </h1>
+          <p className="text-xs text-white/40 font-bold uppercase tracking-[0.3em] ml-1">Tournament Management</p>
+        </div>
+        
+        <h2 className="text-2xl text-white mb-10 font-bold tracking-tight text-center">{tournament.name}</h2>
         
         <div className="w-full max-w-xs flex flex-col gap-4">
-          <p className="text-white/60 text-sm text-center font-bold uppercase tracking-widest mb-2">Select Age Group</p>
+          <p className="text-white/30 text-[10px] text-center font-bold uppercase tracking-widest mb-2">Select Age Group</p>
           {ageGroups.map(group => (
             <button
               key={group.id}
               onClick={() => handleSelectAgeGroup(group.id)}
-              className="bg-white/10 hover:bg-white/20 border border-white/20 text-white p-4 rounded-xl text-lg font-semibold transition-all backdrop-blur-sm"
+              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white p-5 rounded-2xl text-lg font-bold transition-all backdrop-blur-md active:scale-95"
             >
               {group.name}
             </button>
@@ -105,56 +111,59 @@ const Home = () => {
 
   return (
     <Layout title={currentAgeGroup?.name || 'Tournament'}>
-      <div className="flex flex-col gap-6 py-4">
+      <div className="flex flex-col gap-8 py-4">
         {/* Pools Section */}
         <div>
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Pool Schedules</h3>
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 px-2">Pool Schedules</h3>
           <div className="grid gap-3">
              {pools.length > 0 ? pools.map(pool => (
                <Link 
                 key={pool.id} 
                 to={`/pool/${pool.id}`}
-                className="btn bg-white border border-gray-200 text-gray-700 py-4 px-4 flex justify-between items-center group active:bg-gray-50"
+                className="bg-white border border-slate-100 p-5 rounded-2xl flex justify-between items-center group active:scale-[0.98] transition-all shadow-sm hover:shadow-md"
                >
-                 <span className="font-bold">{pool.name}</span>
-                 <span className="text-sm text-gray-400 group-hover:text-tvvc-orange">{pool.court} →</span>
+                 <div className="flex flex-col">
+                   <span className="font-black text-slate-800 tracking-tight">{pool.name}</span>
+                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{pool.court}</span>
+                 </div>
+                 <span className="text-tvvc-teal font-black text-xl group-hover:translate-x-1 transition-transform">→</span>
                </Link>
              )) : (
-               <p className="text-sm text-gray-400 italic px-2">No pools scheduled yet.</p>
+               <p className="text-sm text-slate-400 italic px-2">No pools scheduled yet.</p>
              )}
           </div>
         </div>
 
         {/* Brackets Section */}
-        <div className="grid grid-cols-2 gap-3">
-          <Link to="/bracket/gold" className="btn btn-primary text-center py-3">Gold Bracket</Link>
-          <Link to="/bracket/silver" className="btn btn-secondary text-center py-3">Silver Bracket</Link>
+        <div className="grid grid-cols-2 gap-4">
+          <Link to="/bracket/gold" className="btn btn-primary text-center py-4 text-sm uppercase tracking-widest">Gold Bracket</Link>
+          <Link to="/bracket/silver" className="btn btn-secondary text-center py-4 text-sm uppercase tracking-widest">Silver Bracket</Link>
         </div>
 
         {/* Info Section */}
-        <div className="grid gap-3 border-t pt-6">
-          <Link to="/teams" className="btn bg-white border border-gray-200 text-gray-700 text-center py-3 flex items-center justify-center gap-2">
-            👥 Team List
+        <div className="grid gap-3 border-t border-slate-100 pt-8">
+          <Link to="/teams" className="bg-white border border-slate-100 text-slate-600 font-bold p-4 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all text-sm uppercase tracking-wider">
+            <span>👥</span> Team List
           </Link>
-          <Link to="/info" className="btn bg-white border border-gray-200 text-gray-700 text-center py-3 flex items-center justify-center gap-2">
-            ℹ️ Tournament Info
+          <Link to="/info" className="bg-white border border-slate-100 text-slate-600 font-bold p-4 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all text-sm uppercase tracking-wider">
+            <span>ℹ️</span> Tournament Info
           </Link>
-          <Link to="/results" className="btn bg-white border border-gray-200 text-gray-700 text-center py-3 flex items-center justify-center gap-2">
-            🏆 Final Results
+          <Link to="/results" className="bg-white border border-slate-100 text-slate-600 font-bold p-4 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all text-sm uppercase tracking-wider">
+            <span>🏆</span> Final Results
           </Link>
         </div>
 
         {ageGroups.length > 1 && (
           <button 
             onClick={() => setSelectedAgeGroupId('')}
-            className="text-xs text-center text-tvvc-blue mt-8 font-bold uppercase tracking-widest"
+            className="text-[10px] text-center text-slate-400 hover:text-tvvc-teal mt-4 font-bold uppercase tracking-widest transition-colors"
           >
-            Change Age Group
+            ← Change Age Group
           </button>
         )}
 
         <div className="mt-auto pt-12 text-center">
-          <Link to="/admin" className="text-[10px] text-gray-300 font-bold uppercase tracking-widest hover:text-tvvc-blue transition-colors">
+          <Link to="/admin" className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em] hover:text-tvvc-teal transition-colors">
             Tournament Management
           </Link>
         </div>
