@@ -111,7 +111,7 @@ const PoolScreen = () => {
                   </div>
                   
                   <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6">
-                    <div className="text-right font-black text-slate-800 uppercase italic tracking-tighter truncate text-lg">{t1?.name || 'TBD'}</div>
+                    <div className="text-right font-black text-slate-800 uppercase italic tracking-tighter truncate text-sm">{t1?.name || 'TBD'}</div>
                     <div className="flex flex-col items-center min-w-[80px]">
                       {isComplete ? (
                         <div className="text-2xl font-black text-slate-900 italic tracking-tighter">
@@ -122,7 +122,7 @@ const PoolScreen = () => {
                         <div className="text-[10px] font-black text-slate-200 uppercase tracking-widest italic bg-slate-50 px-3 py-1 rounded-full">vs</div>
                       )}
                     </div>
-                    <div className="text-left font-black text-slate-800 uppercase italic tracking-tighter truncate text-lg">{t2?.name || 'TBD'}</div>
+                    <div className="text-left font-black text-slate-800 uppercase italic tracking-tighter truncate text-sm">{t2?.name || 'TBD'}</div>
                   </div>
 
                   {isComplete && (
