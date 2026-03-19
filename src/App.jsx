@@ -4,6 +4,7 @@ import TeamList from './pages/public/TeamList';
 import Pool from './pages/public/Pool';
 import Bracket from './pages/public/Bracket';
 import Info from './pages/public/Info';
+import Results from './pages/public/Results';
 import AdminLogin from './pages/admin/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminSetup from './pages/admin/Setup';
@@ -21,6 +22,7 @@ function App() {
           <Route path="/bracket/:id" element={<Bracket />} />
           <Route path="/teams" element={<TeamList />} />
           <Route path="/info" element={<Info />} />
+          <Route path="/results" element={<Results />} />
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/setup" element={<AdminSetup />} />

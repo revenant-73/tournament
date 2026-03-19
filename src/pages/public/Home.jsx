@@ -81,7 +81,7 @@ const Home = () => {
   if (!selectedAgeGroupId && ageGroups.length > 1) {
     return (
       <div className="min-h-screen bg-tvvc-blue flex flex-col items-center justify-center p-8">
-        <h1 className="text-4xl font-bold text-white mb-2 italic tracking-tighter uppercase">TVVC</h1>
+        <h1 className="text-4xl font-bold text-white mb-2 italic tracking-tighter uppercase">{tournament.name}</h1>
         <h2 className="text-xl text-white/80 mb-12 font-medium tracking-tight uppercase">Tournament</h2>
         
         <div className="w-full max-w-xs flex flex-col gap-4">
@@ -138,6 +138,9 @@ const Home = () => {
           </Link>
           <Link to="/info" className="btn bg-white border border-gray-200 text-gray-700 text-center py-3 flex items-center justify-center gap-2">
             ℹ️ Tournament Info
+          </Link>
+          <Link to="/results" className="btn bg-white border border-gray-200 text-gray-700 text-center py-3 flex items-center justify-center gap-2">
+            🏆 Final Results
           </Link>
         </div>
 

@@ -56,6 +56,9 @@ const Dashboard = () => {
             <Link to="/admin/setup" className="bg-tvvc-blue text-white px-4 py-2 rounded-lg text-sm font-bold uppercase shadow-sm hover:bg-tvvc-blue/90 transition-colors">
               {tournament ? 'Edit Setup' : 'Start Setup'}
             </Link>
+            <Link to="/results" className="bg-white border border-tvvc-blue text-tvvc-blue px-4 py-2 rounded-lg text-sm font-bold uppercase shadow-sm hover:bg-tvvc-blue/10 transition-colors">
+              View & Export Results
+            </Link>
           </div>
         </section>
 
