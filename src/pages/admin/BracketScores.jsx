@@ -198,30 +198,40 @@ const BracketScores = () => {
                 </p>
               </div>
               
-              <div className="p-8 flex flex-col gap-8">
+              <div className="p-8 flex flex-col gap-6">
                 {[1, 2, 3].map(setNum => (
-                  <div key={setNum} className="flex flex-col gap-3">
+                  <div key={setNum} className="flex flex-col gap-2">
                     <label className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] text-center">Set {setNum}</label>
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6">
-                      <input 
-                        type="number" 
-                        value={scores[`s${setNum}t1`]}
-                        onChange={e => setScores({...scores, [`s${setNum}t1`]: parseInt(e.target.value) || 0})}
-                        className="p-5 bg-slate-50 border border-slate-100 rounded-2xl text-center font-black text-2xl text-tvvc-teal focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal focus:bg-white outline-none transition-all shadow-inner"
-                      />
-                      <span className="text-slate-200 font-black">—</span>
-                      <input 
-                        type="number" 
-                        value={scores[`s${setNum}t2`]}
-                        onChange={e => setScores({...scores, [`s${setNum}t2`]: parseInt(e.target.value) || 0})}
-                        className="p-5 bg-slate-50 border border-slate-100 rounded-2xl text-center font-black text-2xl text-tvvc-teal focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal focus:bg-white outline-none transition-all shadow-inner"
-                      />
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[8px] font-black text-slate-400 uppercase truncate text-center max-w-[100px] mx-auto leading-none h-2">{teams[editingMatch.team1_id] || 'TBD'}</span>
+                        <input 
+                          type="number" 
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={scores[`s${setNum}t1`] === 0 ? '' : scores[`s${setNum}t1`]}
+                          onChange={e => setScores({...scores, [`s${setNum}t1`]: parseInt(e.target.value) || 0})}
+                          className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-center font-black text-xl text-tvvc-teal focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal focus:bg-white outline-none transition-all shadow-inner"
+                        />
+                      </div>
+                      <span className="text-slate-200 font-black mt-3">—</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[8px] font-black text-slate-400 uppercase truncate text-center max-w-[100px] mx-auto leading-none h-2">{teams[editingMatch.team2_id] || 'TBD'}</span>
+                        <input 
+                          type="number" 
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={scores[`s${setNum}t2`] === 0 ? '' : scores[`s${setNum}t2`]}
+                          onChange={e => setScores({...scores, [`s${setNum}t2`]: parseInt(e.target.value) || 0})}
+                          className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-center font-black text-xl text-tvvc-teal focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal focus:bg-white outline-none transition-all shadow-inner"
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}
 
-                <div className="flex flex-col gap-3 mt-4">
-                  <button onClick={handleSave} className="btn btn-primary py-5 uppercase text-[10px] font-black tracking-[0.3em] shadow-xl shadow-teal-500/20">Save & Advance</button>
+                <div className="flex flex-col gap-3 mt-2">
+                  <button onClick={handleSave} className="btn btn-primary py-4 uppercase text-[10px] font-black tracking-[0.3em] shadow-xl shadow-teal-500/20">Save & Advance</button>
                   <button onClick={() => setEditingMatch(null)} className="text-[10px] font-black text-slate-300 uppercase tracking-widest py-3 hover:text-rose-400 transition-colors">Discard Changes</button>
                 </div>
               </div>
