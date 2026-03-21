@@ -17,7 +17,10 @@ const PoolsTV = () => {
 
     async function fetchAllPoolsData() {
       const tId = localStorage.getItem('tournamentId');
-      if (!tId) return;
+      if (!tId) {
+        setLoading(false);
+        return;
+      }
 
       // 1. Fetch all age groups
       const { data: ageGroups } = await supabase
@@ -26,7 +29,10 @@ const PoolsTV = () => {
         .eq('tournament_id', tId)
         .order('display_order');
 
-      if (!ageGroups) return;
+      if (!ageGroups) {
+        setLoading(false);
+        return;
+      }
 
       // 2. Fetch all pools, teams, and matches for these age groups
       const ageGroupIds = ageGroups.map(ag => ag.id);

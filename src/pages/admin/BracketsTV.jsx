@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 const BracketsTV = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+  const [teams, setTeams] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,7 +17,10 @@ const BracketsTV = () => {
 
     async function fetchAllBracketsData() {
       const tId = localStorage.getItem('tournamentId');
-      if (!tId) return;
+      if (!tId) {
+        setLoading(false);
+        return;
+      }
 
       // 1. Fetch all age groups
       const { data: ageGroups } = await supabase
@@ -25,14 +29,17 @@ const BracketsTV = () => {
         .eq('tournament_id', tId)
         .order('display_order');
 
-      if (!ageGroups) return;
+      if (!ageGroups) {
+        setLoading(false);
+        return;
+      }
 
       const ageGroupIds = ageGroups.map(ag => ag.id);
 
       // 2. Fetch all brackets, teams, and bracket matches
       const [
         { data: allBrackets },
-        { data: allTeams },
+        { data: allTeamsData },
         { data: allMatches }
       ] = await Promise.all([
         supabase.from('brackets').select('*').in('age_group_id', ageGroupIds),
@@ -40,10 +47,11 @@ const BracketsTV = () => {
         supabase.from('matches').select('*').in('age_group_id', ageGroupIds).eq('match_type', 'bracket').order('bracket_round', { ascending: true })
       ]);
 
-      const teamMap = allTeams?.reduce((acc, t) => {
+      const teamMap = allTeamsData?.reduce((acc, t) => {
         acc[t.id] = t.name;
         return acc;
       }, {}) || {};
+      setTeams(teamMap);
 
       // 3. Organize data
       const organizedData = ageGroups.map(ag => {
@@ -115,8 +123,8 @@ const BracketsTV = () => {
                         <div key={roundNum} className="flex flex-col gap-2">
                           <div className="text-[8px] font-black text-white/20 uppercase tracking-widest text-center border-b border-white/5 pb-1">{getRoundTitle(roundNum)}</div>
                           {roundMatches.map(match => {
-                            const t1Name = match.team1_id ? allTeams?.find(t => t.id === match.team1_id)?.name : (match.bracket_round === 1 ? 'BYE' : 'TBD');
-                            const t2Name = match.team2_id ? allTeams?.find(t => t.id === match.team2_id)?.name : (match.bracket_round === 1 ? 'BYE' : 'TBD');
+                            const t1Name = match.team1_id ? teams[match.team1_id] : (match.bracket_round === 1 ? 'BYE' : 'TBD');
+                            const t2Name = match.team2_id ? teams[match.team2_id] : (match.bracket_round === 1 ? 'BYE' : 'TBD');
 
                             return (
                               <div key={match.id} className="bg-white/5 p-2 rounded-lg border border-white/5 flex flex-col gap-1">
