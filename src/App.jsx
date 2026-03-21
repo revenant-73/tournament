@@ -12,6 +12,8 @@ import AdminSetup from './pages/admin/Setup';
 import AdminPoolScores from './pages/admin/PoolScores';
 import AdminSeeding from './pages/admin/Seeding';
 import AdminBracketScores from './pages/admin/BracketScores';
+import PoolsTV from './pages/admin/PoolsTV';
+import BracketsTV from './pages/admin/BracketsTV';
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
             <Route path="/admin/scores/pools" element={<AdminPoolScores />} />
             <Route path="/admin/scores/brackets" element={<AdminBracketScores />} />
             <Route path="/admin/seeding" element={<AdminSeeding />} />
+            <Route path="/admin/tv/pools" element={<PoolsTV />} />
+            <Route path="/admin/tv/brackets" element={<BracketsTV />} />
           </Routes>
         </div>
       </Router>

@@ -104,6 +104,27 @@ const Dashboard = () => {
                 </div>
               </Link>
             </div>
+
+            {/* TV Display Section */}
+            <div className="flex flex-col gap-6 lg:col-span-2 mt-4">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-2 text-center">Gym TV Displays</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link to="/admin/tv/pools" target="_blank" className="bg-tvvc-black p-8 rounded-[2rem] flex justify-between items-center group hover:scale-[1.02] transition-all shadow-2xl">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black text-tvvc-teal uppercase tracking-widest">Live Feed</span>
+                    <span className="font-black text-white text-xl tracking-tight uppercase italic">Pools & Results TV</span>
+                  </div>
+                  <span className="text-tvvc-teal font-black text-3xl">↗</span>
+                </Link>
+                <Link to="/admin/tv/brackets" target="_blank" className="bg-tvvc-black p-8 rounded-[2rem] flex justify-between items-center group hover:scale-[1.02] transition-all shadow-2xl">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black text-tvvc-coral uppercase tracking-widest">Live Feed</span>
+                    <span className="font-black text-white text-xl tracking-tight uppercase italic">Brackets & Finals TV</span>
+                  </div>
+                  <span className="text-tvvc-coral font-black text-3xl">↗</span>
+                </Link>
+              </div>
+            </div>
           </>
         )}
       </div>
