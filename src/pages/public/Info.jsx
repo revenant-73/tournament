@@ -26,8 +26,8 @@ const InfoScreen = () => {
     <Layout title="Tournament Info">
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-6">
         <div>
-          <h2 className="text-2xl font-black text-tvvc-blue uppercase italic">{tournament.name}</h2>
-          <p className="text-tvvc-orange font-bold uppercase tracking-widest text-sm mt-1">
+          <h2 className="text-2xl font-black text-brand-blue uppercase italic">{tournament.name}</h2>
+          <p className="text-brand-orange font-bold uppercase tracking-widest text-sm mt-1">
             {new Date(tournament.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>

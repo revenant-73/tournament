@@ -179,7 +179,7 @@ const BracketScores = () => {
         {/* Inline Score Entry Table */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-tvvc-black text-white">
+            <thead className="bg-brand-black text-white">
               <tr>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">Pos</th>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">Matchup</th>
@@ -202,8 +202,8 @@ const BracketScores = () => {
                     <td className="p-4 text-xs font-black text-slate-300">R{match.bracket_round} P{match.bracket_position}</td>
                     <td className="p-4">
                       <div className="flex flex-col gap-1">
-                        <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winner_id === match.team1_id ? 'text-tvvc-teal' : 'text-slate-800'}`}>{t1}</span>
-                        <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winner_id === match.team2_id ? 'text-tvvc-teal' : 'text-slate-800'}`}>{t2}</span>
+                        <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winner_id === match.team1_id ? 'text-brand-teal' : 'text-slate-800'}`}>{t1}</span>
+                        <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winner_id === match.team2_id ? 'text-brand-teal' : 'text-slate-800'}`}>{t2}</span>
                       </div>
                     </td>
                     <td className="p-4">
@@ -213,14 +213,14 @@ const BracketScores = () => {
                           disabled={isPlaceholder}
                           value={s.s1t1 === 0 ? '' : s.s1t1}
                           onChange={e => handleScoreChange(match.id, 's1t1', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
                         />
                         <input 
                           type="number"
                           disabled={isPlaceholder}
                           value={s.s1t2 === 0 ? '' : s.s1t2}
                           onChange={e => handleScoreChange(match.id, 's1t2', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
                         />
                       </div>
                     </td>
@@ -231,14 +231,14 @@ const BracketScores = () => {
                           disabled={isPlaceholder}
                           value={s.s2t1 === 0 ? '' : s.s2t1}
                           onChange={e => handleScoreChange(match.id, 's2t1', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
                         />
                         <input 
                           type="number"
                           disabled={isPlaceholder}
                           value={s.s2t2 === 0 ? '' : s.s2t2}
                           onChange={e => handleScoreChange(match.id, 's2t2', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
                         />
                       </div>
                     </td>
@@ -249,19 +249,19 @@ const BracketScores = () => {
                           disabled={isPlaceholder}
                           value={s.s3t1 === 0 ? '' : s.s3t1}
                           onChange={e => handleScoreChange(match.id, 's3t1', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
                         />
                         <input 
                           type="number"
                           disabled={isPlaceholder}
                           value={s.s3t2 === 0 ? '' : s.s3t2}
                           onChange={e => handleScoreChange(match.id, 's3t2', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
                         />
                       </div>
                     </td>
                     <td className="p-4 text-center">
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${match.status === 'complete' ? 'text-tvvc-teal' : 'text-tvvc-coral animate-pulse'}`}>
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${match.status === 'complete' ? 'text-brand-teal' : 'text-brand-coral animate-pulse'}`}>
                         {match.status === 'complete' ? 'COMPLETE' : (isPlaceholder ? 'WAITING' : 'PENDING')}
                       </span>
                     </td>
@@ -269,7 +269,7 @@ const BracketScores = () => {
                       <button 
                         onClick={() => handleSave(match)}
                         disabled={saving === match.id || isPlaceholder}
-                        className="bg-tvvc-black text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-tvvc-teal transition-colors disabled:opacity-50"
+                        className="bg-brand-black text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-brand-teal transition-colors disabled:opacity-50"
                       >
                         {saving === match.id ? '...' : 'SAVE'}
                       </button>

@@ -90,22 +90,22 @@ const BracketScreen = () => {
                     <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden transition-all hover:shadow-md">
                       {/* Team 1 */}
                       <div className={`p-5 flex justify-between items-center border-b border-slate-50 ${match.winner_id === match.team1_id ? 'bg-teal-50/30' : ''}`}>
-                        <span className={`font-black uppercase italic tracking-tighter truncate text-sm ${match.winner_id === match.team1_id ? 'text-tvvc-teal' : 'text-slate-400'}`}>
+                        <span className={`font-black uppercase italic tracking-tighter truncate text-sm ${match.winner_id === match.team1_id ? 'text-brand-teal' : 'text-slate-400'}`}>
                           {teams[match.team1_id] || (match.bracket_round === 1 ? 'BYE' : 'TBD')}
                         </span>
                         {match.status === 'complete' && (
-                          <span className={`font-black text-xs ${match.winner_id === match.team1_id ? 'text-tvvc-teal' : 'text-slate-300'}`}>
+                          <span className={`font-black text-xs ${match.winner_id === match.team1_id ? 'text-brand-teal' : 'text-slate-300'}`}>
                             {match.set1_team1 + match.set2_team1 + (match.set3_team1 || 0) > match.set1_team2 + match.set2_team2 + (match.set3_team2 || 0) ? 'WIN' : 'LOSS'}
                           </span>
                         )}
                       </div>
                       {/* Team 2 */}
                       <div className={`p-5 flex justify-between items-center ${match.winner_id === match.team2_id ? 'bg-teal-50/30' : ''}`}>
-                        <span className={`font-black uppercase italic tracking-tighter truncate text-sm ${match.winner_id === match.team2_id ? 'text-tvvc-teal' : 'text-slate-400'}`}>
+                        <span className={`font-black uppercase italic tracking-tighter truncate text-sm ${match.winner_id === match.team2_id ? 'text-brand-teal' : 'text-slate-400'}`}>
                           {teams[match.team2_id] || (match.bracket_round === 1 ? 'BYE' : 'TBD')}
                         </span>
                         {match.status === 'complete' && (
-                          <span className={`font-black text-xs ${match.winner_id === match.team2_id ? 'text-tvvc-teal' : 'text-slate-300'}`}>
+                          <span className={`font-black text-xs ${match.winner_id === match.team2_id ? 'text-brand-teal' : 'text-slate-300'}`}>
                             {match.set1_team2 + match.set2_team2 + (match.set3_team2 || 0) > match.set1_team1 + match.set2_team1 + (match.set3_team1 || 0) ? 'WIN' : 'LOSS'}
                           </span>
                         )}

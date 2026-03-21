@@ -60,7 +60,7 @@ const TeamList = () => {
                   {team.pool_teams?.length > 0 ? (
                     <Link 
                       to={`/pool/${team.pool_teams[0].pool_id}`}
-                      className="text-tvvc-blue border border-tvvc-blue/20 bg-blue-50/50 px-2 py-1 rounded"
+                      className="text-brand-blue border border-brand-blue/20 bg-blue-50/50 px-2 py-1 rounded"
                     >
                       {team.pool_teams[0].pools.name} • {team.pool_teams[0].pools.court}
                     </Link>
@@ -72,7 +72,7 @@ const TeamList = () => {
                     <Link 
                       key={bracket.id}
                       to={`/bracket/${bracket.name.toLowerCase()}`}
-                      className="text-tvvc-orange border border-tvvc-orange/20 bg-orange-50/50 px-2 py-1 rounded"
+                      className="text-brand-orange border border-brand-orange/20 bg-orange-50/50 px-2 py-1 rounded"
                     >
                       {bracket.name} Bracket
                     </Link>

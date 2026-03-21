@@ -79,73 +79,102 @@ const PoolsTV = () => {
     };
   }, [navigate]);
 
-  if (loading) return <div className="bg-tvvc-black min-h-screen text-white flex items-center justify-center p-8">Loading TV View...</div>;
+  if (loading) return <div className="bg-brand-black min-h-screen text-white flex items-center justify-center p-8">Loading TV View...</div>;
+
+  const allPools = data.flatMap(ag => ag.pools.map(pool => ({ ...pool, ageGroupName: ag.name })));
 
   return (
-    <div className="bg-tvvc-black min-h-screen text-white p-4 font-sans overflow-hidden">
-      <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
-        <h1 className="text-2xl font-black italic uppercase tracking-tighter text-tvvc-teal">
-          Pool Standings & Results
-        </h1>
-        <div className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">
-          TVVC Live Dashboard
+    <div className="bg-brand-black min-h-screen text-white p-6 font-sans">
+      <div className="flex justify-between items-end mb-8 border-b-2 border-brand-teal/30 pb-4">
+        <div>
+          <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white">
+            Live <span className="text-brand-teal">Pool Standings</span>
+          </h1>
+          <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/40 mt-1">Tournament Dashboard</p>
+        </div>
+        <div className="text-right">
+          <div className="text-brand-coral font-black animate-pulse uppercase tracking-widest text-xs">● Live Updates</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-hidden h-[calc(100vh-100px)]">
-        {data.map(ag => (
-          ag.pools.map(pool => (
-            <div key={pool.id} className="bg-white/5 rounded-2xl p-4 border border-white/10 flex flex-col gap-3">
-              <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-tvvc-teal">{ag.name}</span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/40">{pool.name} • {pool.court}</span>
+      <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-8">
+        {allPools.map(pool => (
+          <div key={pool.id} className="bg-white/5 rounded-[2rem] p-8 border border-white/10 flex flex-col gap-6 shadow-2xl backdrop-blur-sm">
+            <div className="flex justify-between items-center border-b border-white/10 pb-4">
+              <div className="flex flex-col">
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-brand-teal">{pool.ageGroupName}</span>
+                <span className="text-2xl font-black uppercase italic tracking-tighter">{pool.name}</span>
               </div>
-
-              {/* Standings Mini-Table */}
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-[8px] font-black text-white/20 uppercase tracking-widest border-b border-white/5">
-                    <th className="pb-1">Team</th>
-                    <th className="pb-1 text-center">W-L</th>
-                    <th className="pb-1 text-center">+/-</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {pool.standings.map((team, idx) => (
-                    <tr key={team.id} className={idx < 2 ? 'text-tvvc-teal' : 'text-white/60'}>
-                      <td className="py-1 text-[11px] font-black uppercase italic truncate max-w-[120px]">{team.name}</td>
-                      <td className="py-1 text-[11px] font-black text-center">{team.matchesWon}-{team.matchesLost}</td>
-                      <td className="py-1 text-[11px] font-black text-center">{team.pointDifferential > 0 ? '+' : ''}{team.pointDifferential}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Recent Results */}
-              <div className="mt-1">
-                <div className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">Results</div>
-                <div className="grid gap-1">
-                  {pool.matches.map(m => {
-                    const t1 = pool.teams.find(t => t.id === m.team1_id);
-                    const t2 = pool.teams.find(t => t.id === m.team2_id);
-                    const isComplete = m.status === 'complete';
-                    
-                    if (!isComplete) return null;
-
-                    return (
-                      <div key={m.id} className="flex justify-between items-center text-[9px] font-bold bg-white/5 px-2 py-1 rounded">
-                        <span className="truncate max-w-[60px] uppercase">{t1?.name}</span>
-                        <span className="text-tvvc-teal mx-1">
-                          {m.set1_team1}-{m.set1_team2}, {m.set2_team1}-{m.set2_team2}{m.set3_team1 > 0 ? `, ${m.set3_team1}-${m.set3_team2}` : ''}
-                        </span>
-                        <span className="truncate max-w-[60px] uppercase text-right">{t2?.name}</span>
-                      </div>
-                    );
-                  }).filter(Boolean).slice(-3)} {/* Show last 3 results */}
-                </div>
+              <div className="bg-white/10 px-4 py-2 rounded-xl text-center">
+                <span className="block text-[8px] font-black uppercase opacity-40">Court</span>
+                <span className="text-sm font-black uppercase italic text-brand-coral">{pool.court}</span>
               </div>
             </div>
-          ))
+
+            {/* Detailed Standings Table */}
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-[10px] font-black text-white/30 uppercase tracking-widest border-b border-white/5">
+                  <th className="pb-2">Team</th>
+                  <th className="pb-2 text-center">M W/L</th>
+                  <th className="pb-2 text-center">S W/L</th>
+                  <th className="pb-2 text-center">Diff</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {pool.standings.map((team, idx) => (
+                  <tr key={team.id} className={idx < 2 ? 'text-brand-teal bg-brand-teal/5' : 'text-white/80'}>
+                    <td className="py-3 text-sm font-black uppercase italic tracking-tight pr-4">
+                      <div className="flex items-center gap-3">
+                        <span className="opacity-20 text-[10px] tabular-nums">{idx + 1}</span>
+                        <span>{team.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 text-sm font-black text-center tabular-nums">{team.matchesWon}-{team.matchesLost}</td>
+                    <td className="py-3 text-sm font-black text-center tabular-nums opacity-60">{team.setsWon}-{team.setsLost}</td>
+                    <td className="py-3 text-sm font-black text-center tabular-nums">{team.pointDifferential > 0 ? '+' : ''}{team.pointDifferential}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Simplified Recent Results */}
+            <div className="mt-2 bg-black/20 rounded-2xl p-4 border border-white/5">
+              <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <span className="w-1 h-1 bg-brand-coral rounded-full"></span>
+                Match Scores
+              </div>
+              <div className="grid gap-2">
+                {pool.matches.filter(m => m.status === 'complete').length === 0 ? (
+                  <div className="text-[10px] font-black text-white/20 uppercase text-center py-2 italic tracking-widest">No scores entered yet</div>
+                ) : (
+                  pool.matches.map(m => {
+                    const t1 = pool.teams.find(t => t.id === m.team1_id);
+                    const t2 = pool.teams.find(t => t.id === m.team2_id);
+                    
+                    if (m.status !== 'complete') return null;
+
+                    // Calculate match score (sets won)
+                    let t1Sets = 0;
+                    let t2Sets = 0;
+                    if (m.set1_team1 > m.set1_team2) t1Sets++; else if (m.set1_team2 > m.set1_team1) t2Sets++;
+                    if (m.set2_team1 > m.set2_team2) t1Sets++; else if (m.set2_team2 > m.set2_team1) t2Sets++;
+                    if (m.set3_team1 > 0 || m.set3_team2 > 0) {
+                      if (m.set3_team1 > m.set3_team2) t1Sets++; else if (m.set3_team2 > m.set3_team1) t2Sets++;
+                    }
+
+                    return (
+                      <div key={m.id} className="flex justify-between items-center text-[11px] font-black uppercase italic border-b border-white/5 last:border-0 pb-1 last:pb-0">
+                        <span className="truncate flex-1 text-white/60">{t1?.name}</span>
+                        <span className="px-3 text-brand-coral tabular-nums font-black">{t1Sets}—{t2Sets}</span>
+                        <span className="truncate flex-1 text-right text-white/60">{t2?.name}</span>
+                      </div>
+                    );
+                  }).filter(Boolean).slice(-4)
+                )}
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     </div>

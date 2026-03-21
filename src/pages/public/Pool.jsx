@@ -83,7 +83,7 @@ const PoolScreen = () => {
                     <td className="px-6 py-5 font-black text-slate-800 tracking-tight italic uppercase">{team.name}</td>
                     <td className="px-2 py-5 text-center font-black text-slate-900">{team.matchesWon}-{team.matchesLost}</td>
                     <td className="px-2 py-5 text-center text-slate-600 font-bold">{team.setsWon}-{team.setsLost}</td>
-                    <td className="px-2 py-5 text-center text-[10px] font-black text-tvvc-teal">{team.pointDifferential > 0 ? '+' : ''}{team.pointDifferential}</td>
+                    <td className="px-2 py-5 text-center text-[10px] font-black text-brand-teal">{team.pointDifferential > 0 ? '+' : ''}{team.pointDifferential}</td>
                   </tr>
                 ))}
               </tbody>
@@ -104,8 +104,8 @@ const PoolScreen = () => {
               return (
                 <div key={match.id} className={`bg-white p-6 rounded-[2rem] shadow-sm border transition-all ${isComplete ? 'border-slate-100 opacity-60' : 'border-teal-100 shadow-md shadow-teal-500/5 scale-[1.02]'}`}>
                   <div className="flex justify-between items-center mb-6">
-                    <span className="text-[10px] font-black text-tvvc-teal uppercase tracking-[0.2em]">Match {match.match_order || idx + 1}</span>
-                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${isComplete ? 'bg-slate-100 text-slate-400' : 'bg-teal-50 text-tvvc-teal animate-pulse'}`}>
+                    <span className="text-[10px] font-black text-brand-teal uppercase tracking-[0.2em]">Match {match.match_order || idx + 1}</span>
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${isComplete ? 'bg-slate-100 text-slate-400' : 'bg-teal-50 text-brand-teal animate-pulse'}`}>
                       {isComplete ? 'Final' : 'Live Now'}
                     </span>
                   </div>

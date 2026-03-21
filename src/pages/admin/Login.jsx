@@ -30,7 +30,7 @@ const Login = () => {
 
       // 2. Simple password verification
       if (password === data.admin_password) {
-        localStorage.setItem('adminToken', 'tvvc-admin-authenticated');
+        localStorage.setItem('adminToken', 'brand-admin-authenticated');
         localStorage.setItem('tournamentId', data.id);
         navigate('/admin/dashboard');
       } else {
@@ -47,8 +47,8 @@ const Login = () => {
     <Layout title="Admin Login">
       <div className="max-w-xs mx-auto py-16 flex flex-col gap-10">
         <div className="text-center">
-          <div className="bg-tvvc-black w-24 h-24 rounded-[2rem] mx-auto flex items-center justify-center text-white text-4xl mb-6 shadow-2xl shadow-slate-200 border-4 border-white">
-            <span className="text-tvvc-teal italic font-black">T</span>
+          <div className="bg-brand-black w-24 h-24 rounded-[2rem] mx-auto flex items-center justify-center text-white text-4xl mb-6 shadow-2xl shadow-slate-200 border-4 border-white">
+            <span className="text-brand-teal italic font-black">T</span>
           </div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">Director Login</h2>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Tournament Management</p>
@@ -61,7 +61,7 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Admin Password"
-              className="w-full p-5 bg-white border border-slate-100 rounded-2xl shadow-sm focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal focus:outline-none font-bold text-center text-lg transition-all"
+              className="w-full p-5 bg-white border border-slate-100 rounded-2xl shadow-sm focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal focus:outline-none font-bold text-center text-lg transition-all"
               required
             />
           </div>

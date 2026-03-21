@@ -152,7 +152,7 @@ const PoolScores = () => {
         {/* Inline Score Entry Table */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-tvvc-black text-white">
+            <thead className="bg-brand-black text-white">
               <tr>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">#</th>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">Matchup</th>
@@ -181,13 +181,13 @@ const PoolScores = () => {
                           type="number"
                           value={s.s1t1 === 0 ? '' : s.s1t1}
                           onChange={e => handleScoreChange(match.id, 's1t1', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none"
                         />
                         <input 
                           type="number"
                           value={s.s1t2 === 0 ? '' : s.s1t2}
                           onChange={e => handleScoreChange(match.id, 's1t2', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none"
                         />
                       </div>
                     </td>
@@ -197,13 +197,13 @@ const PoolScores = () => {
                           type="number"
                           value={s.s2t1 === 0 ? '' : s.s2t1}
                           onChange={e => handleScoreChange(match.id, 's2t1', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none"
                         />
                         <input 
                           type="number"
                           value={s.s2t2 === 0 ? '' : s.s2t2}
                           onChange={e => handleScoreChange(match.id, 's2t2', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none"
                         />
                       </div>
                     </td>
@@ -213,18 +213,18 @@ const PoolScores = () => {
                           type="number"
                           value={s.s3t1 === 0 ? '' : s.s3t1}
                           onChange={e => handleScoreChange(match.id, 's3t1', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none"
                         />
                         <input 
                           type="number"
                           value={s.s3t2 === 0 ? '' : s.s3t2}
                           onChange={e => handleScoreChange(match.id, 's3t2', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-tvvc-teal bg-slate-50 focus:bg-white outline-none"
+                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none"
                         />
                       </div>
                     </td>
                     <td className="p-4 text-center">
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${match.status === 'complete' ? 'text-tvvc-teal' : 'text-tvvc-coral animate-pulse'}`}>
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${match.status === 'complete' ? 'text-brand-teal' : 'text-brand-coral animate-pulse'}`}>
                         {match.status === 'complete' ? 'COMPLETE' : 'PENDING'}
                       </span>
                     </td>
@@ -232,7 +232,7 @@ const PoolScores = () => {
                       <button 
                         onClick={() => handleSave(match)}
                         disabled={saving === match.id}
-                        className="bg-tvvc-black text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-tvvc-teal transition-colors disabled:opacity-50"
+                        className="bg-brand-black text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-brand-teal transition-colors disabled:opacity-50"
                       >
                         {saving === match.id ? '...' : 'SAVE'}
                       </button>

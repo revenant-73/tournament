@@ -80,15 +80,13 @@ const Home = () => {
   // Age group selection screen
   if (!selectedAgeGroupId && ageGroups.length > 1) {
     return (
-      <div className="min-h-screen bg-tvvc-black flex flex-col items-center justify-center p-8">
+      <div className="min-h-screen bg-brand-black flex flex-col items-center justify-center p-8">
         <div className="mb-16 text-center">
           <h1 className="text-6xl font-black text-white mb-2 italic tracking-tighter uppercase leading-none">
-            <span className="text-tvvc-teal">T</span>VVC
+            <span className="text-brand-teal">{tournament.name.charAt(0)}</span>{tournament.name.slice(1)}
           </h1>
           <p className="text-xs text-white/40 font-bold uppercase tracking-[0.3em] ml-1">Tournament Management</p>
         </div>
-        
-        <h2 className="text-2xl text-white mb-10 font-bold tracking-tight text-center">{tournament.name}</h2>
         
         <div className="w-full max-w-xs flex flex-col gap-4">
           <p className="text-white/30 text-[10px] text-center font-bold uppercase tracking-widest mb-2">Select Age Group</p>
@@ -126,7 +124,7 @@ const Home = () => {
                    <span className="font-black text-slate-800 tracking-tight">{pool.name}</span>
                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{pool.court}</span>
                  </div>
-                 <span className="text-tvvc-teal font-black text-xl group-hover:translate-x-1 transition-transform">→</span>
+                 <span className="text-brand-teal font-black text-xl group-hover:translate-x-1 transition-transform">→</span>
                </Link>
              )) : (
                <p className="text-sm text-slate-400 italic px-2">No pools scheduled yet.</p>
@@ -156,14 +154,14 @@ const Home = () => {
         {ageGroups.length > 1 && (
           <button 
             onClick={() => setSelectedAgeGroupId('')}
-            className="text-[10px] text-center text-slate-400 hover:text-tvvc-teal mt-4 font-bold uppercase tracking-widest transition-colors"
+            className="text-[10px] text-center text-slate-400 hover:text-brand-teal mt-4 font-bold uppercase tracking-widest transition-colors"
           >
             ← Change Age Group
           </button>
         )}
 
         <div className="mt-auto pt-12 text-center">
-          <Link to="/admin" className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em] hover:text-tvvc-teal transition-colors">
+          <Link to="/admin" className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.2em] hover:text-brand-teal transition-colors">
             Tournament Management
           </Link>
         </div>

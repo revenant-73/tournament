@@ -155,7 +155,7 @@ const Seeding = () => {
                   key={team.id}
                   onClick={() => setSelectedTeam(team)}
                   className={`p-5 rounded-2xl border text-sm flex justify-between items-center transition-all active:scale-95 ${
-                    selectedTeam?.id === team.id ? 'bg-tvvc-teal text-white border-tvvc-teal shadow-lg shadow-teal-500/20' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'
+                    selectedTeam?.id === team.id ? 'bg-brand-teal text-white border-brand-teal shadow-lg shadow-teal-500/20' : 'bg-white border-slate-100 hover:border-slate-300 shadow-sm'
                   }`}
                 >
                   <span className="font-black italic uppercase tracking-tighter truncate pr-4">{idx + 1}. {team.name}</span>
@@ -173,7 +173,7 @@ const Seeding = () => {
           <div className="grid grid-cols-2 gap-8">
           {['gold', 'silver'].map(bracket => (
             <div key={bracket} className="flex flex-col gap-4">
-              <h4 className={`text-[10px] font-black uppercase tracking-[0.4em] text-center mb-2 ${bracket === 'gold' ? 'text-tvvc-teal' : 'text-slate-300'}`}>
+              <h4 className={`text-[10px] font-black uppercase tracking-[0.4em] text-center mb-2 ${bracket === 'gold' ? 'text-brand-teal' : 'text-slate-300'}`}>
                 {bracket} Bracket
               </h4>
               <div className="flex flex-col gap-3">
@@ -184,7 +184,7 @@ const Seeding = () => {
                     className="h-16 border-2 border-dashed border-slate-100 rounded-2xl flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all overflow-hidden bg-white active:scale-95 group"
                   >
                     {seeding[bracket][seed] ? (
-                      <div className="w-full h-full flex items-center px-4 bg-teal-50 text-tvvc-teal font-black border-l-8 border-tvvc-teal italic uppercase tracking-tighter text-sm">
+                      <div className="w-full h-full flex items-center px-4 bg-teal-50 text-brand-teal font-black border-l-8 border-brand-teal italic uppercase tracking-tighter text-sm">
                         <span className="opacity-40 mr-3">SEED {seed}</span>
                         <span className="truncate">{seeding[bracket][seed].name}</span>
                       </div>

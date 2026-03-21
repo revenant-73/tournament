@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        tvvc: {
+        brand: {
           teal: '#14b8a6',
           coral: '#f43f5e',
           black: '#0f172a',

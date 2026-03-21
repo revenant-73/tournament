@@ -78,7 +78,7 @@ const Setup = () => {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap border-b-2 transition-all ${
-                activeTab === tab ? 'border-tvvc-teal text-tvvc-teal' : 'border-transparent text-slate-400 hover:text-slate-600'
+                activeTab === tab ? 'border-brand-teal text-brand-teal' : 'border-transparent text-slate-400 hover:text-slate-600'
               }`}
             >
               {tab}
@@ -97,7 +97,7 @@ const Setup = () => {
                   required
                   value={tournament.name}
                   onChange={e => setTournament({...tournament, name: e.target.value})}
-                  className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal outline-none font-bold text-slate-800 transition-all shadow-sm"
+                  className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal outline-none font-bold text-slate-800 transition-all shadow-sm"
                   placeholder="e.g. TVVC Summer Grass Open"
                 />
               </div>
@@ -110,7 +110,7 @@ const Setup = () => {
                     required
                     value={tournament.date}
                     onChange={e => setTournament({...tournament, date: e.target.value})}
-                    className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal outline-none font-bold text-slate-800 transition-all shadow-sm"
+                    className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal outline-none font-bold text-slate-800 transition-all shadow-sm"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -120,7 +120,7 @@ const Setup = () => {
                     required
                     value={tournament.admin_password}
                     onChange={e => setTournament({...tournament, admin_password: e.target.value})}
-                    className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal outline-none font-bold text-slate-800 transition-all shadow-sm"
+                    className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal outline-none font-bold text-slate-800 transition-all shadow-sm"
                     placeholder="Enter password"
                   />
                 </div>
@@ -132,7 +132,7 @@ const Setup = () => {
                   type="text"
                   value={tournament.location || ''}
                   onChange={e => setTournament({...tournament, location: e.target.value})}
-                  className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal outline-none font-bold text-slate-800 transition-all shadow-sm"
+                  className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal outline-none font-bold text-slate-800 transition-all shadow-sm"
                   placeholder="Venue name or address"
                 />
               </div>
@@ -143,7 +143,7 @@ const Setup = () => {
                   rows="6"
                   value={tournament.info || ''}
                   onChange={e => setTournament({...tournament, info: e.target.value})}
-                  className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal outline-none text-sm font-medium leading-relaxed text-slate-700 transition-all shadow-sm"
+                  className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal outline-none text-sm font-medium leading-relaxed text-slate-700 transition-all shadow-sm"
                   placeholder="Add tournament details, rules, contact info..."
                 />
               </div>
@@ -226,7 +226,7 @@ const AgeGroupsManager = ({ tournamentId }) => {
           value={newName} 
           onChange={e => setNewName(e.target.value)}
           placeholder="New Age Group (e.g. Open)"
-          className="flex-1 p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal font-bold text-slate-800 transition-all shadow-sm"
+          className="flex-1 p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all shadow-sm"
         />
         <button onClick={handleAdd} className="btn btn-primary px-8 text-sm uppercase tracking-widest">Add</button>
       </div>
@@ -288,7 +288,7 @@ const TeamsManager = ({ tournamentId }) => {
         <select 
           value={selectedGroupId} 
           onChange={e => setSelectedGroupId(e.target.value)}
-          className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal font-bold text-slate-800 transition-all shadow-sm cursor-pointer"
+          className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all shadow-sm cursor-pointer"
         >
           {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
@@ -300,7 +300,7 @@ const TeamsManager = ({ tournamentId }) => {
           value={newTeamName} 
           onChange={e => setNewTeamName(e.target.value)}
           placeholder="New Team Name"
-          className="flex-1 p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal font-bold text-slate-800 transition-all shadow-sm"
+          className="flex-1 p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all shadow-sm"
         />
         <button onClick={handleAddTeam} className="btn btn-primary px-8 text-sm uppercase tracking-widest">Add</button>
       </div>
@@ -456,7 +456,7 @@ const PoolsManager = ({ tournamentId }) => {
         <select 
           value={selectedGroupId} 
           onChange={e => setSelectedGroupId(e.target.value)}
-          className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal font-bold text-slate-800 transition-all shadow-sm cursor-pointer"
+          className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all shadow-sm cursor-pointer"
         >
           {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
@@ -471,14 +471,14 @@ const PoolsManager = ({ tournamentId }) => {
             placeholder="Pool Name (A, B...)" 
             value={newPool.name}
             onChange={e => setNewPool({...newPool, name: e.target.value})}
-            className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal font-bold text-slate-800 transition-all"
+            className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all"
           />
           <input 
             type="text" 
             placeholder="Court (1, 2...)" 
             value={newPool.court}
             onChange={e => setNewPool({...newPool, court: e.target.value})}
-            className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal font-bold text-slate-800 transition-all text-center uppercase"
+            className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all text-center uppercase"
           />
         </div>
         <button onClick={handleAddPool} className="btn btn-primary py-4 text-[10px] uppercase tracking-[0.2em] font-black">
@@ -502,7 +502,7 @@ const PoolsManager = ({ tournamentId }) => {
               {/* Teams in Pool */}
               <div className="flex flex-wrap gap-2 min-h-[2rem]">
                 {poolTeams[pool.id]?.length > 0 ? poolTeams[pool.id]?.map(team => (
-                  <div key={team.id} className="bg-teal-50 text-tvvc-teal px-4 py-2 rounded-full text-[10px] font-black border border-teal-100 flex items-center gap-3 uppercase tracking-wider">
+                  <div key={team.id} className="bg-teal-50 text-brand-teal px-4 py-2 rounded-full text-[10px] font-black border border-teal-100 flex items-center gap-3 uppercase tracking-wider">
                     {team.name}
                     <button onClick={() => handleRemoveTeam(pool.id, team.id)} className="text-teal-300 hover:text-rose-500 font-black text-sm">×</button>
                   </div>
@@ -515,7 +515,7 @@ const PoolsManager = ({ tournamentId }) => {
               {unassignedTeams.length > 0 && (
                 <div className="flex gap-2">
                   <select 
-                    className="flex-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 outline-none focus:ring-4 focus:ring-tvvc-teal/10 focus:border-tvvc-teal transition-all cursor-pointer"
+                    className="flex-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal transition-all cursor-pointer"
                     onChange={(e) => handleAssignTeam(pool.id, e.target.value)}
                     value=""
                   >
@@ -527,7 +527,7 @@ const PoolsManager = ({ tournamentId }) => {
 
               <button 
                 onClick={() => generateMatches(pool.id)}
-                className="mt-2 text-[10px] font-black text-tvvc-coral uppercase tracking-[0.2em] border-2 border-tvvc-coral/10 rounded-2xl py-4 hover:bg-tvvc-coral hover:text-white hover:border-tvvc-coral transition-all"
+                className="mt-2 text-[10px] font-black text-brand-coral uppercase tracking-[0.2em] border-2 border-brand-coral/10 rounded-2xl py-4 hover:bg-brand-coral hover:text-white hover:border-brand-coral transition-all"
               >
                 🔄 Generate Round Robin Matches
               </button>

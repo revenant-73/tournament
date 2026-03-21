@@ -105,7 +105,7 @@ const Results = () => {
             <select 
               value={selectedAgeGroupId} 
               onChange={e => setSelectedAgeGroupId(e.target.value)}
-              className="p-4 bg-white border border-slate-100 rounded-2xl outline-none font-bold text-slate-800 transition-all shadow-sm focus:ring-4 focus:ring-tvvc-teal/10"
+              className="p-4 bg-white border border-slate-100 rounded-2xl outline-none font-bold text-slate-800 transition-all shadow-sm focus:ring-4 focus:ring-brand-teal/10"
             >
               {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
@@ -123,23 +123,23 @@ const Results = () => {
         <div id="results-content" className="flex flex-col gap-10 print:gap-12">
           
           {/* Header for Print */}
-          <div className="hidden print:flex flex-col items-center text-center border-b-4 border-tvvc-black pb-8 mb-6">
-            <h1 className="text-5xl font-black italic text-tvvc-black uppercase tracking-tighter leading-none mb-2">
-              <span className="text-tvvc-teal">T</span>VVC TOURNAMENT
+          <div className="hidden print:flex flex-col items-center text-center border-b-4 border-brand-black pb-8 mb-6">
+            <h1 className="text-5xl font-black italic text-brand-black uppercase tracking-tighter leading-none mb-2">
+              <span className="text-brand-teal">{tournament?.name?.charAt(0)}</span>{tournament?.name?.slice(1)}
             </h1>
-            <h2 className="text-2xl font-black text-slate-400 uppercase tracking-[0.4em] mt-2">{tournament?.name}</h2>
+            <h2 className="text-2xl font-black text-slate-400 uppercase tracking-[0.4em] mt-2">OFFICIAL RESULTS</h2>
             <div className="flex items-center gap-4 mt-4">
-              <span className="h-[2px] w-8 bg-tvvc-teal"></span>
+              <span className="h-[2px] w-8 bg-brand-teal"></span>
               <p className="text-sm text-slate-900 font-black uppercase tracking-widest italic">
                 {currentAgeGroup?.name} Division • Final Results
               </p>
-              <span className="h-[2px] w-8 bg-tvvc-teal"></span>
+              <span className="h-[2px] w-8 bg-brand-teal"></span>
             </div>
           </div>
 
           {/* Pool Results */}
           <section className="print:break-inside-avoid">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 px-2 print:text-tvvc-black print:text-xs print:mb-6">Pool Performance</h3>
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 px-2 print:text-brand-black print:text-xs print:mb-6">Pool Performance</h3>
             <div className="grid gap-8">
               {data.pools.map(pool => {
                 const poolMatches = data.matches.filter(m => m.pool_id === pool.id);
@@ -170,7 +170,7 @@ const Results = () => {
                         {standings.map((team, idx) => (
                           <tr key={team.id} className={idx < 2 ? 'bg-teal-50/10' : ''}>
                             <td className="px-6 py-5 font-black text-slate-800 uppercase italic tracking-tighter">{team.name}</td>
-                            <td className="px-2 py-5 text-center font-black text-tvvc-teal">{team.matchesWon}-{team.matchesLost}</td>
+                            <td className="px-2 py-5 text-center font-black text-brand-teal">{team.matchesWon}-{team.matchesLost}</td>
                             <td className="px-2 py-5 text-center text-slate-500 font-bold">{team.setsWon}-{team.setsLost}</td>
                             <td className="px-2 py-5 text-center text-[10px] font-black text-slate-400">{team.pointDifferential > 0 ? '+' : ''}{team.pointDifferential}</td>
                           </tr>
@@ -185,7 +185,7 @@ const Results = () => {
 
           {/* Bracket Results */}
           <section className="print:break-inside-avoid">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 px-2 print:text-tvvc-black print:text-xs print:mb-6">Podium Finishers</h3>
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 px-2 print:text-brand-black print:text-xs print:mb-6">Podium Finishers</h3>
             <div className="grid gap-6">
               {data.brackets.map(bracket => {
                 const finalMatch = data.matches.find(m => 
@@ -198,9 +198,9 @@ const Results = () => {
                 const runnerUp = finalMatch ? data.teams.find(t => t.id === (finalMatch.winner_id === finalMatch.team1_id ? finalMatch.team2_id : finalMatch.team1_id)) : null;
 
                 return (
-                  <div key={bracket.id} className="bg-tvvc-black p-8 rounded-[2.5rem] shadow-xl border border-slate-100 print:shadow-none print:bg-slate-50 print:border-slate-200 group">
+                  <div key={bracket.id} className="bg-brand-black p-8 rounded-[2.5rem] shadow-xl border border-slate-100 print:shadow-none print:bg-slate-50 print:border-slate-200 group">
                     <div className="flex items-center gap-8">
-                      <div className={`w-20 h-20 rounded-[1.5rem] flex items-center justify-center text-4xl font-black shadow-2xl transition-transform group-hover:scale-110 ${bracket.name.toLowerCase() === 'gold' ? 'bg-tvvc-teal text-white shadow-teal-500/20' : 'bg-tvvc-coral text-white shadow-rose-500/20'}`}>
+                      <div className={`w-20 h-20 rounded-[1.5rem] flex items-center justify-center text-4xl font-black shadow-2xl transition-transform group-hover:scale-110 ${bracket.name.toLowerCase() === 'gold' ? 'bg-brand-teal text-white shadow-teal-500/20' : 'bg-brand-coral text-white shadow-rose-500/20'}`}>
                         {bracket.name.toLowerCase() === 'gold' ? '🥇' : '🥈'}
                       </div>
                       <div className="flex-1">
@@ -230,10 +230,10 @@ const Results = () => {
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           body { background: white !important; }
-          .bg-tvvc-black { background: #0f172a !important; color: white !important; -webkit-print-color-adjust: exact; }
-          .text-tvvc-teal { color: #14b8a6 !important; -webkit-print-color-adjust: exact; }
-          .bg-tvvc-teal { background: #14b8a6 !important; -webkit-print-color-adjust: exact; }
-          .bg-tvvc-coral { background: #f43f5e !important; -webkit-print-color-adjust: exact; }
+          .bg-brand-black { background: #0f172a !important; color: white !important; -webkit-print-color-adjust: exact; }
+          .text-brand-teal { color: #14b8a6 !important; -webkit-print-color-adjust: exact; }
+          .bg-brand-teal { background: #14b8a6 !important; -webkit-print-color-adjust: exact; }
+          .bg-brand-coral { background: #f43f5e !important; -webkit-print-color-adjust: exact; }
           nav, footer, .print\\:hidden { display: none !important; }
           header { display: none !important; }
           main { padding: 0 !important; }

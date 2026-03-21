@@ -76,7 +76,7 @@ const BracketsTV = () => {
     };
   }, [navigate]);
 
-  if (loading) return <div className="bg-tvvc-black min-h-screen text-white flex items-center justify-center p-8">Loading TV View...</div>;
+  if (loading) return <div className="bg-brand-black min-h-screen text-white flex items-center justify-center p-8">Loading TV View...</div>;
 
   const getRoundTitle = (roundNum) => {
     if (roundNum === 1) return 'QF';
@@ -85,25 +85,25 @@ const BracketsTV = () => {
   };
 
   return (
-    <div className="bg-tvvc-black min-h-screen text-white p-4 font-sans overflow-hidden">
+    <div className="bg-brand-black min-h-screen text-white p-4 font-sans overflow-hidden">
       <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
-        <h1 className="text-2xl font-black italic uppercase tracking-tighter text-tvvc-coral">
+        <h1 className="text-2xl font-black italic uppercase tracking-tighter text-brand-coral">
           Elimination Brackets
         </h1>
         <div className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">
-          TVVC Live Dashboard
+          Live Dashboard
         </div>
       </div>
 
       <div className="flex flex-col gap-8 overflow-hidden h-[calc(100vh-100px)]">
         {data.map(ag => (
           <div key={ag.id} className="flex flex-col gap-4">
-            <h2 className="text-xl font-black uppercase italic tracking-tighter text-white border-l-4 border-tvvc-teal pl-3">{ag.name}</h2>
+            <h2 className="text-xl font-black uppercase italic tracking-tighter text-white border-l-4 border-brand-teal pl-3">{ag.name}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {ag.brackets.map(bracket => (
                 <div key={bracket.id} className="bg-white/5 rounded-2xl p-4 border border-white/10">
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-tvvc-coral">{bracket.name} Bracket</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-brand-coral">{bracket.name} Bracket</span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2">
@@ -120,11 +120,11 @@ const BracketsTV = () => {
 
                             return (
                               <div key={match.id} className="bg-white/5 p-2 rounded-lg border border-white/5 flex flex-col gap-1">
-                                <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winner_id === match.team1_id ? 'text-tvvc-teal' : 'text-white/40'}`}>
+                                <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winner_id === match.team1_id ? 'text-brand-teal' : 'text-white/40'}`}>
                                   <span className="truncate">{t1Name}</span>
                                   {match.status === 'complete' && <span>{match.winner_id === match.team1_id ? 'W' : 'L'}</span>}
                                 </div>
-                                <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winner_id === match.team2_id ? 'text-tvvc-teal' : 'text-white/40'}`}>
+                                <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winner_id === match.team2_id ? 'text-brand-teal' : 'text-white/40'}`}>
                                   <span className="truncate">{t2Name}</span>
                                   {match.status === 'complete' && <span>{match.winner_id === match.team2_id ? 'W' : 'L'}</span>}
                                 </div>

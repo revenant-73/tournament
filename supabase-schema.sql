@@ -1,4 +1,4 @@
--- TVVC Tournament App Schema
+-- Tournament App Schema
 
 -- Enable UUID extension
 create extension if not exists "uuid-ossp";

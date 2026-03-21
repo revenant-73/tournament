@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 :root {
-  --tvvc-teal: #14b8a6;
-  --tvvc-coral: #f43f5e;
-  --tvvc-black: #0f172a;
+  --brand-teal: #14b8a6;
+  --brand-coral: #f43f5e;
+  --brand-black: #0f172a;
 }
 
 body {
@@ -17,11 +17,11 @@ body {
 }
 
 .btn-primary {
-  @apply bg-tvvc-teal text-white shadow-lg shadow-teal-500/20 hover:bg-tvvc-teal-dark hover:-translate-y-0.5;
+  @apply bg-brand-teal text-white shadow-lg shadow-teal-500/20 hover:bg-brand-teal-dark hover:-translate-y-0.5;
 }
 
 .btn-secondary {
-  @apply bg-tvvc-coral text-white shadow-lg shadow-rose-500/20 hover:bg-tvvc-coral-dark hover:-translate-y-0.5;
+  @apply bg-brand-coral text-white shadow-lg shadow-rose-500/20 hover:bg-brand-coral-dark hover:-translate-y-0.5;
 }
 
 .card {
