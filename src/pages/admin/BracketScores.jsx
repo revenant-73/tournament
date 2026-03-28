@@ -91,11 +91,16 @@ const BracketScores = () => {
 
     const isPlaceholder = !match.team1_id || !match.team2_id;
     
-    // If teams are present, we can validate and save scores
+    // If teams are present and scores have been entered, we can validate and save scores
     let winnerId = match.winner_id;
     let status = match.status;
 
-    if (!isPlaceholder) {
+    // Check if any score is non-zero
+    const hasScores = scores.s1t1 > 0 || scores.s1t2 > 0 || 
+                      scores.s2t1 > 0 || scores.s2t2 > 0 || 
+                      scores.s3t1 > 0 || scores.s3t2 > 0;
+
+    if (!isPlaceholder && hasScores) {
       // 1. Validate
       if (!validateSetScore(scores.s1t1, scores.s1t2, 0)) {
         setSaving(null);
@@ -124,6 +129,10 @@ const BracketScores = () => {
       const stats = calculateMatchStats(sets);
       winnerId = stats.winner === 1 ? match.team1_id : match.team2_id;
       status = 'complete';
+    } else if (!isPlaceholder && !hasScores) {
+      // If no scores, just update court and keep scheduled
+      status = 'scheduled';
+      winnerId = null;
     }
 
     // 3. Update Match
