@@ -88,6 +88,14 @@ const BracketScreen = () => {
                 {roundMatches.map(match => (
                   <div key={match.id} className="relative group">
                     <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden transition-all hover:shadow-md">
+                      {/* Court Info */}
+                      {match.court && (
+                        <div className="bg-slate-50 border-b border-slate-100 px-4 py-1.5 flex justify-center">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">
+                            Court {match.court}
+                          </span>
+                        </div>
+                      )}
                       {/* Team 1 */}
                       <div className={`p-5 flex justify-between items-center border-b border-slate-50 ${match.winner_id === match.team1_id ? 'bg-teal-50/30' : ''}`}>
                         <span className={`font-black uppercase italic tracking-tighter truncate text-sm ${match.winner_id === match.team1_id ? 'text-brand-teal' : 'text-slate-400'}`}>

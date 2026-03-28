@@ -63,7 +63,8 @@ const BracketScores = () => {
       scoresMap[m.id] = {
         s1t1: m.set1_team1 || 0, s1t2: m.set1_team2 || 0,
         s2t1: m.set2_team1 || 0, s2t2: m.set2_team2 || 0,
-        s3t1: m.set3_team1 || 0, s3t2: m.set3_team2 || 0
+        s3t1: m.set3_team1 || 0, s3t2: m.set3_team2 || 0,
+        court: m.court || ''
       };
     });
     setMatchScores(scoresMap);
@@ -79,46 +80,51 @@ const BracketScores = () => {
       ...prev,
       [matchId]: {
         ...prev[matchId],
-        [field]: parseInt(value) || 0
+        [field]: field === 'court' ? value : (parseInt(value) || 0)
       }
     }));
   };
 
   const handleSave = async (match) => {
-    if (!match.team1_id || !match.team2_id) {
-      return alert('Cannot save score for incomplete matchups (TBD/BYE)');
-    }
-
     const scores = matchScores[match.id];
     setSaving(match.id);
 
-    // 1. Validate
-    if (!validateSetScore(scores.s1t1, scores.s1t2, 0)) {
-      setSaving(null);
-      return alert('Invalid Set 1 Score');
-    }
-    if (!validateSetScore(scores.s2t1, scores.s2t2, 1)) {
-      setSaving(null);
-      return alert('Invalid Set 2 Score');
-    }
+    const isPlaceholder = !match.team1_id || !match.team2_id;
     
-    const needsSet3 = (scores.s1t1 > scores.s1t2 && scores.s2t1 < scores.s2t2) || 
-                      (scores.s1t1 < scores.s1t2 && scores.s2t1 > scores.s2t2);
-    
-    if (needsSet3 && !validateSetScore(scores.s3t1, scores.s3t2, 2)) {
-      setSaving(null);
-      return alert('Invalid Set 3 Score');
-    }
+    // If teams are present, we can validate and save scores
+    let winnerId = match.winner_id;
+    let status = match.status;
 
-    // 2. Stats & Winner
-    const sets = [
-      { team1: scores.s1t1, team2: scores.s1t2 },
-      { team1: scores.s2t1, team2: scores.s2t2 }
-    ];
-    if (needsSet3) sets.push({ team1: scores.s3t1, team2: scores.s3t2 });
-    
-    const stats = calculateMatchStats(sets);
-    const winnerId = stats.winner === 1 ? match.team1_id : match.team2_id;
+    if (!isPlaceholder) {
+      // 1. Validate
+      if (!validateSetScore(scores.s1t1, scores.s1t2, 0)) {
+        setSaving(null);
+        return alert('Invalid Set 1 Score');
+      }
+      if (!validateSetScore(scores.s2t1, scores.s2t2, 1)) {
+        setSaving(null);
+        return alert('Invalid Set 2 Score');
+      }
+      
+      const needsSet3 = (scores.s1t1 > scores.s1t2 && scores.s2t1 < scores.s2t2) || 
+                        (scores.s1t1 < scores.s1t2 && scores.s2t1 > scores.s2t2);
+      
+      if (needsSet3 && !validateSetScore(scores.s3t1, scores.s3t2, 2)) {
+        setSaving(null);
+        return alert('Invalid Set 3 Score');
+      }
+
+      // 2. Stats & Winner
+      const sets = [
+        { team1: scores.s1t1, team2: scores.s1t2 },
+        { team1: scores.s2t1, team2: scores.s2t2 }
+      ];
+      if (needsSet3) sets.push({ team1: scores.s3t1, team2: scores.s3t2 });
+      
+      const stats = calculateMatchStats(sets);
+      winnerId = stats.winner === 1 ? match.team1_id : match.team2_id;
+      status = 'complete';
+    }
 
     // 3. Update Match
     const { error } = await supabase
@@ -126,8 +132,9 @@ const BracketScores = () => {
       .update({
         set1_team1: scores.s1t1, set1_team2: scores.s1t2,
         set2_team1: scores.s2t1, set2_team2: scores.s2t2,
-        set3_team1: needsSet3 ? scores.s3t1 : 0, set3_team2: needsSet3 ? scores.s3t2 : 0,
-        status: 'complete',
+        set3_team1: scores.s3t1, set3_team2: scores.s3t2,
+        court: scores.court,
+        status: status,
         winner_id: winnerId
       })
       .eq('id', match.id);
@@ -138,18 +145,20 @@ const BracketScores = () => {
     }
 
     // 4. Auto-Advance Winner
-    const { data: targetMatches } = await supabase
-      .from('matches')
-      .select('*')
-      .or(`source_match1_id.eq.${match.id},source_match2_id.eq.${match.id}`);
+    if (status === 'complete' && winnerId) {
+      const { data: targetMatches } = await supabase
+        .from('matches')
+        .select('*')
+        .or(`source_match1_id.eq.${match.id},source_match2_id.eq.${match.id}`);
 
-    if (targetMatches?.length > 0) {
-      for (const target of targetMatches) {
-        const updateData = {};
-        if (target.source_match1_id === match.id) updateData.team1_id = winnerId;
-        if (target.source_match2_id === match.id) updateData.team2_id = winnerId;
-        
-        await supabase.from('matches').update(updateData).eq('id', target.id);
+      if (targetMatches?.length > 0) {
+        for (const target of targetMatches) {
+          const updateData = {};
+          if (target.source_match1_id === match.id) updateData.team1_id = winnerId;
+          if (target.source_match2_id === match.id) updateData.team2_id = winnerId;
+          
+          await supabase.from('matches').update(updateData).eq('id', target.id);
+        }
       }
     }
 
@@ -186,6 +195,7 @@ const BracketScores = () => {
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 1</th>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 2</th>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 3</th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Court</th>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Status</th>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Action</th>
               </tr>
@@ -260,6 +270,17 @@ const BracketScores = () => {
                         />
                       </div>
                     </td>
+                    <td className="p-4">
+                      <div className="flex justify-center">
+                        <input 
+                          type="text"
+                          value={s.court}
+                          onChange={e => handleScoreChange(match.id, 'court', e.target.value)}
+                          placeholder="Ct"
+                          className="w-16 p-1 text-center border rounded font-black text-slate-600 bg-slate-50 focus:bg-white outline-none"
+                        />
+                      </div>
+                    </td>
                     <td className="p-4 text-center">
                       <span className={`text-[10px] font-black uppercase tracking-widest ${match.status === 'complete' ? 'text-brand-teal' : 'text-brand-coral animate-pulse'}`}>
                         {match.status === 'complete' ? 'COMPLETE' : (isPlaceholder ? 'WAITING' : 'PENDING')}
@@ -268,7 +289,7 @@ const BracketScores = () => {
                     <td className="p-4 text-center">
                       <button 
                         onClick={() => handleSave(match)}
-                        disabled={saving === match.id || isPlaceholder}
+                        disabled={saving === match.id}
                         className="bg-brand-black text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-brand-teal transition-colors disabled:opacity-50"
                       >
                         {saving === match.id ? '...' : 'SAVE'}
