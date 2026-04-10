@@ -412,7 +412,6 @@ const PoolsManager = ({ tournamentId }) => {
         match_type: 'pool',
         team1_id: teamsInPool[m.t1].id,
         team2_id: teamsInPool[m.t2].id,
-        ref_team_id: teamsInPool[m.ref].id,
         match_order: idx + 1,
         status: 'scheduled'
       }));
@@ -431,7 +430,6 @@ const PoolsManager = ({ tournamentId }) => {
         match_type: 'pool',
         team1_id: teamsInPool[m.t1].id,
         team2_id: teamsInPool[m.t2].id,
-        ref_team_id: teamsInPool[m.ref].id,
         match_order: idx + 1,
         status: 'scheduled'
       }));
@@ -460,7 +458,6 @@ const PoolsManager = ({ tournamentId }) => {
         match_type: 'pool',
         team1_id: teamsInPool[m.t1].id,
         team2_id: teamsInPool[m.t2].id,
-        ref_team_id: teamsInPool[m.ref].id,
         match_order: idx + 1,
         court: `C${m.court}`,
         status: 'scheduled'

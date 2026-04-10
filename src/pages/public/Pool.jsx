@@ -148,13 +148,6 @@ const PoolScreen = () => {
                     </div>
                   </div>
 
-                  {!isComplete && (
-                    <div className="mt-6 pt-4 border-t border-slate-50 flex justify-center items-center gap-2">
-                      <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Ref:</span>
-                      <span className="text-[10px] font-black text-brand-coral uppercase tracking-widest italic">{teams.find(t => t.id === match.ref_team_id)?.name || 'TBD'}</span>
-                    </div>
-                  )}
-
                   {isComplete && (
                     <div className="mt-6 pt-6 border-t border-slate-50 flex justify-center gap-6 text-[10px] font-black text-slate-400 tracking-[0.2em]">
                       <span className="bg-slate-50 px-3 py-1 rounded-lg">{match.set1_team1}-{match.set1_team2}</span>
