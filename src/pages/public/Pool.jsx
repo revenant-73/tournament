@@ -101,6 +101,13 @@ const PoolScreen = () => {
               const t2 = teams.find(t => t.id === match.team2_id);
               const isComplete = match.status === 'complete';
 
+              const t1Sets = (match.set1_team1 > match.set1_team2 ? 1 : 0) + 
+                             (match.set2_team1 > match.set2_team2 ? 1 : 0) + 
+                             ((match.set3_team1 || 0) > (match.set3_team2 || 0) ? 1 : 0);
+              const t2Sets = (match.set1_team2 > match.set1_team1 ? 1 : 0) + 
+                             (match.set2_team2 > match.set2_team1 ? 1 : 0) + 
+                             ((match.set3_team2 || 0) > (match.set3_team1 || 0) ? 1 : 0);
+
               return (
                 <div key={match.id} className={`bg-white p-6 rounded-[2rem] shadow-sm border transition-all ${isComplete ? 'border-slate-100 opacity-60' : 'border-teal-100 shadow-md shadow-teal-500/5 scale-[1.02]'}`}>
                   <div className="flex justify-between items-center mb-6">
@@ -115,19 +122,30 @@ const PoolScreen = () => {
                     </span>
                   </div>
                   
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6">
-                    <div className="text-right font-black text-slate-800 uppercase italic tracking-tighter truncate text-sm">{t1?.name || 'TBD'}</div>
-                    <div className="flex flex-col items-center min-w-[80px]">
-                      {isComplete ? (
-                        <div className="text-2xl font-black text-slate-900 italic tracking-tighter">
-                          {match.set1_team1 + match.set2_team1 + (match.set3_team1 || 0) > 
-                           match.set1_team2 + match.set2_team2 + (match.set3_team2 || 0) ? '2 - 0' : '0 - 2'}
+                  <div className="flex flex-col gap-3">
+                    {/* Team 1 Row */}
+                    <div className="flex justify-between items-center bg-slate-50/50 p-3 rounded-2xl">
+                      <div className="font-black text-slate-800 uppercase italic tracking-tighter text-xs flex-1 pr-4">
+                        {t1?.name || 'TBD'}
+                      </div>
+                      {isComplete && (
+                        <div className="text-xl font-black text-slate-900 italic tracking-tighter tabular-nums">
+                          {t1Sets}
                         </div>
-                      ) : (
-                        <div className="text-[10px] font-black text-slate-200 uppercase tracking-widest italic bg-slate-50 px-3 py-1 rounded-full">vs</div>
                       )}
                     </div>
-                    <div className="text-left font-black text-slate-800 uppercase italic tracking-tighter truncate text-sm">{t2?.name || 'TBD'}</div>
+
+                    {/* Team 2 Row */}
+                    <div className="flex justify-between items-center bg-slate-50/50 p-3 rounded-2xl">
+                      <div className="font-black text-slate-800 uppercase italic tracking-tighter text-xs flex-1 pr-4">
+                        {t2?.name || 'TBD'}
+                      </div>
+                      {isComplete && (
+                        <div className="text-xl font-black text-slate-900 italic tracking-tighter tabular-nums">
+                          {t2Sets}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {!isComplete && (
