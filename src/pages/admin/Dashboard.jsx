@@ -75,15 +75,15 @@ const Dashboard = () => {
               <div className="grid gap-4">
                 <Link to="/admin/scores/pools" className="bg-white border border-slate-100 p-8 rounded-[2rem] flex justify-between items-center group hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 shadow-sm">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black text-brand-teal uppercase tracking-widest">Pool Play</span>
-                    <span className="font-black text-slate-800 text-xl tracking-tight uppercase italic">Score Entry</span>
+                    <span className="text-[10px] font-black text-brand-teal uppercase tracking-widest">Round 1</span>
+                    <span className="font-black text-slate-800 text-xl tracking-tight uppercase italic">Preliminary Pools</span>
                   </div>
                   <span className="text-brand-teal font-black text-3xl group-hover:translate-x-2 transition-transform">→</span>
                 </Link>
                 <Link to="/admin/scores/brackets" className="bg-white border border-slate-100 p-8 rounded-[2rem] flex justify-between items-center group hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 shadow-sm">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black text-brand-coral uppercase tracking-widest">Elimination</span>
-                    <span className="font-black text-slate-800 text-xl tracking-tight uppercase italic">Bracket Scores</span>
+                    <span className="text-[10px] font-black text-brand-coral uppercase tracking-widest">2nd Round</span>
+                    <span className="font-black text-slate-800 text-xl tracking-tight uppercase italic">Scores & Results</span>
                   </div>
                   <span className="text-brand-coral font-black text-3xl group-hover:translate-x-2 transition-transform">→</span>
                 </Link>
@@ -96,7 +96,7 @@ const Dashboard = () => {
               <Link to="/admin/seeding" className="bg-white border border-slate-100 p-8 rounded-[2rem] flex justify-between items-center group hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 shadow-sm border-l-4 border-l-brand-teal">
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Post-Pools</span>
-                  <span className="font-black text-slate-800 text-xl tracking-tight uppercase italic">Bracket Seeding</span>
+                  <span className="font-black text-slate-800 text-xl tracking-tight uppercase italic">2nd Round Seeding</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-[10px] font-black text-brand-teal uppercase tracking-widest bg-teal-50 px-3 py-1 rounded-full">Available</span>

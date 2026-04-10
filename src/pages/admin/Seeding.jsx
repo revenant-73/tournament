@@ -142,7 +142,7 @@ const Seeding = () => {
     : (selectedFormat.type === 'bracket_custom' ? [{ name: 'Custom', size: customSize }] : selectedFormat.brackets);
 
   return (
-    <Layout title="Bracket & Pool Seeding" isAdmin={true}>
+    <Layout title="2nd Round Seeding" isAdmin={true}>
       <div className="flex flex-col gap-8 py-2 lg:grid lg:grid-cols-[400px_1fr] lg:gap-12 lg:items-start">
         <div className="flex flex-col gap-8 lg:sticky lg:top-24">
           <div className="flex flex-col gap-4 bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
