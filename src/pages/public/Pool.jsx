@@ -104,7 +104,12 @@ const PoolScreen = () => {
               return (
                 <div key={match.id} className={`bg-white p-6 rounded-[2rem] shadow-sm border transition-all ${isComplete ? 'border-slate-100 opacity-60' : 'border-teal-100 shadow-md shadow-teal-500/5 scale-[1.02]'}`}>
                   <div className="flex justify-between items-center mb-6">
-                    <span className="text-[10px] font-black text-brand-teal uppercase tracking-[0.2em]">Match {match.match_order || idx + 1}</span>
+                    <div className="flex gap-4 items-center">
+                      <span className="text-[10px] font-black text-brand-teal uppercase tracking-[0.2em]">Match {match.match_order || idx + 1}</span>
+                      {match.court && (
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full">{match.court}</span>
+                      )}
+                    </div>
                     <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${isComplete ? 'bg-slate-100 text-slate-400' : 'bg-teal-50 text-brand-teal animate-pulse'}`}>
                       {isComplete ? 'Final' : 'Live Now'}
                     </span>
@@ -124,6 +129,13 @@ const PoolScreen = () => {
                     </div>
                     <div className="text-left font-black text-slate-800 uppercase italic tracking-tighter truncate text-sm">{t2?.name || 'TBD'}</div>
                   </div>
+
+                  {!isComplete && (
+                    <div className="mt-6 pt-4 border-t border-slate-50 flex justify-center items-center gap-2">
+                      <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Ref:</span>
+                      <span className="text-[10px] font-black text-brand-coral uppercase tracking-widest italic">{teams.find(t => t.id === match.ref_team_id)?.name || 'TBD'}</span>
+                    </div>
+                  )}
 
                   {isComplete && (
                     <div className="mt-6 pt-6 border-t border-slate-50 flex justify-center gap-6 text-[10px] font-black text-slate-400 tracking-[0.2em]">

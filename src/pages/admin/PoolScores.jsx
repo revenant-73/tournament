@@ -155,7 +155,9 @@ const PoolScores = () => {
             <thead className="bg-brand-black text-white">
               <tr>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">#</th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">Court</th>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">Matchup</th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">Ref</th>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 1</th>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 2</th>
                 <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 3</th>
@@ -169,11 +171,15 @@ const PoolScores = () => {
                 return (
                   <tr key={match.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 text-xs font-black text-slate-300">M{match.match_order}</td>
+                    <td className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{match.court || '-'}</td>
                     <td className="p-4">
                       <div className="flex flex-col gap-1">
                         <span className="text-sm font-black text-slate-800 uppercase italic tracking-tighter">{teams[match.team1_id]}</span>
                         <span className="text-sm font-black text-slate-800 uppercase italic tracking-tighter">{teams[match.team2_id]}</span>
                       </div>
+                    </td>
+                    <td className="p-4">
+                      <span className="text-[10px] font-black text-brand-coral uppercase tracking-widest italic">{teams[match.ref_team_id] || 'TBD'}</span>
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-2 items-center">

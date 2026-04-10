@@ -66,6 +66,7 @@ create table matches (
   bracket_position integer,
   team1_id uuid references teams(id) on delete set null,
   team2_id uuid references teams(id) on delete set null,
+  ref_team_id uuid references teams(id) on delete set null,
   court text,
   match_order integer not null default 0,
   status text not null default 'scheduled' check (status in ('scheduled', 'complete')),

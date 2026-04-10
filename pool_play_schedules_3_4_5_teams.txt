@@ -1,0 +1,43 @@
+POOL PLAY SCHEDULES
+
+====================
+3 TEAMS - ONE COURT
+====================
+Match 1: Team 1 vs Team 3  | Ref: Team 2
+Match 2: Team 2 vs Team 3  | Ref: Team 1
+Match 3: Team 1 vs Team 2  | Ref: Team 3
+
+====================
+4 TEAMS - ONE COURT
+====================
+Match 1: Team 1 vs Team 3  | Ref: Team 4
+Match 2: Team 2 vs Team 4  | Ref: Team 3
+Match 3: Team 1 vs Team 4  | Ref: Team 2
+Match 4: Team 2 vs Team 3  | Ref: Team 4
+Match 5: Team 3 vs Team 4  | Ref: Team 1
+Match 6: Team 1 vs Team 2  | Ref: Team 3
+
+====================
+5 TEAMS - TWO COURTS
+====================
+Wave 1:
+  Court 1: Team 1 vs Team 4  | Ref: Team 4
+  Court 2: Team 2 vs Team 5  | Ref: Team 5
+
+Wave 2:
+  Court 1: Team 1 vs Team 5  | Ref: Team 3
+  Court 2: Team 2 vs Team 3  | Ref: Team 2
+
+Wave 3:
+  Court 1: Team 3 vs Team 5  | Ref: Team 2
+  Court 2: Team 2 vs Team 4  | Ref: Team 1
+
+Wave 4:
+  Court 1: Team 1 vs Team 3  | Ref: Team 1
+  Court 2: Team 4 vs Team 5  | Ref: Team 4
+
+Wave 5:
+  Court 1: Team 1 vs Team 2  | Ref: Team 5
+  Court 2: Team 3 vs Team 4  | Ref: Team 3
+
+Note: The 5-team format uses two courts, and referee teams work two matches simultaneously.

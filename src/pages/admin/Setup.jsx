@@ -399,25 +399,70 @@ const PoolsManager = ({ tournamentId }) => {
       return;
     }
 
-    // Custom 4-team schedule: 1v3, 2v4, 1v4, 2v3, 3v4, 1v2
     let matches = [];
-    if (teamsInPool.length === 4) {
+    if (teamsInPool.length === 3) {
       const schedule = [
-        [0, 2], // Round 1: 1v3
-        [1, 3], // Round 2: 2v4
-        [0, 3], // Round 3: 1v4
-        [1, 2], // Round 4: 2v3
-        [2, 3], // Round 5: 3v4
-        [0, 1]  // Round 6: 1v2
+        { t1: 0, t2: 2, ref: 1 }, // 1v3 Ref 2
+        { t1: 1, t2: 2, ref: 0 }, // 2v3 Ref 1
+        { t1: 0, t2: 1, ref: 2 }  // 1v2 Ref 3
       ];
-      
-      matches = schedule.map((pair, idx) => ({
+      matches = schedule.map((m, idx) => ({
         age_group_id: selectedGroupId,
         pool_id: poolId,
         match_type: 'pool',
-        team1_id: teamsInPool[pair[0]].id,
-        team2_id: teamsInPool[pair[1]].id,
+        team1_id: teamsInPool[m.t1].id,
+        team2_id: teamsInPool[m.t2].id,
+        ref_team_id: teamsInPool[m.ref].id,
         match_order: idx + 1,
+        status: 'scheduled'
+      }));
+    } else if (teamsInPool.length === 4) {
+      const schedule = [
+        { t1: 0, t2: 2, ref: 3 }, // 1v3 Ref 4
+        { t1: 1, t2: 3, ref: 2 }, // 2v4 Ref 3
+        { t1: 0, t2: 3, ref: 1 }, // 1v4 Ref 2
+        { t1: 1, t2: 2, ref: 3 }, // 2v3 Ref 4
+        { t1: 2, t2: 3, ref: 0 }, // 3v4 Ref 1
+        { t1: 0, t2: 1, ref: 2 }  // 1v2 Ref 3
+      ];
+      matches = schedule.map((m, idx) => ({
+        age_group_id: selectedGroupId,
+        pool_id: poolId,
+        match_type: 'pool',
+        team1_id: teamsInPool[m.t1].id,
+        team2_id: teamsInPool[m.t2].id,
+        ref_team_id: teamsInPool[m.ref].id,
+        match_order: idx + 1,
+        status: 'scheduled'
+      }));
+    } else if (teamsInPool.length === 5) {
+      const pool = pools.find(p => p.id === poolId);
+      const schedule = [
+        // Wave 1
+        { t1: 0, t2: 3, ref: 3, court: '1' }, // 1v4 Ref 4
+        { t1: 1, t2: 4, ref: 4, court: '2' }, // 2v5 Ref 5
+        // Wave 2
+        { t1: 0, t2: 4, ref: 2, court: '1' }, // 1v5 Ref 3
+        { t1: 1, t2: 2, ref: 1, court: '2' }, // 2v3 Ref 2
+        // Wave 3
+        { t1: 2, t2: 4, ref: 1, court: '1' }, // 3v5 Ref 2
+        { t1: 1, t2: 3, ref: 0, court: '2' }, // 2v4 Ref 1
+        // Wave 4
+        { t1: 0, t2: 2, ref: 0, court: '1' }, // 1v3 Ref 1
+        { t1: 3, t2: 4, ref: 3, court: '2' }, // 4v5 Ref 4
+        // Wave 5
+        { t1: 0, t2: 1, ref: 4, court: '1' }, // 1v2 Ref 5
+        { t1: 2, t2: 3, ref: 2, court: '2' }  // 3v4 Ref 3
+      ];
+      matches = schedule.map((m, idx) => ({
+        age_group_id: selectedGroupId,
+        pool_id: poolId,
+        match_type: 'pool',
+        team1_id: teamsInPool[m.t1].id,
+        team2_id: teamsInPool[m.t2].id,
+        ref_team_id: teamsInPool[m.ref].id,
+        match_order: idx + 1,
+        court: `C${m.court}`,
         status: 'scheduled'
       }));
     } else {
