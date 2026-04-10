@@ -39,7 +39,7 @@ const BracketScores = () => {
   }
 
   async function fetchBrackets() {
-    const { data } = await supabase.from('brackets').select('*').eq('age_group_id', selectedGroupId).order('display_order');
+    const { data } = await supabase.from('brackets').select('*').eq('age_group_id', selectedGroupId).order('round').order('display_order');
     if (data) {
       setBrackets(data);
       if (data.length > 0) setSelectedBracketId(data[0].id);
@@ -91,17 +91,14 @@ const BracketScores = () => {
 
     const isPlaceholder = !match.team1_id || !match.team2_id;
     
-    // If teams are present and scores have been entered, we can validate and save scores
     let winnerId = match.winner_id;
     let status = match.status;
 
-    // Check if any score is non-zero
     const hasScores = scores.s1t1 > 0 || scores.s1t2 > 0 || 
                       scores.s2t1 > 0 || scores.s2t2 > 0 || 
                       scores.s3t1 > 0 || scores.s3t2 > 0;
 
     if (!isPlaceholder && hasScores) {
-      // 1. Validate
       if (!validateSetScore(scores.s1t1, scores.s1t2, 0)) {
         setSaving(null);
         return alert('Invalid Set 1 Score');
@@ -119,7 +116,6 @@ const BracketScores = () => {
         return alert('Invalid Set 3 Score');
       }
 
-      // 2. Stats & Winner
       const sets = [
         { team1: scores.s1t1, team2: scores.s1t2 },
         { team1: scores.s2t1, team2: scores.s2t2 }
@@ -130,12 +126,10 @@ const BracketScores = () => {
       winnerId = stats.winner === 1 ? match.team1_id : match.team2_id;
       status = 'complete';
     } else if (!isPlaceholder && !hasScores) {
-      // If no scores, just update court and keep scheduled
       status = 'scheduled';
       winnerId = null;
     }
 
-    // 3. Update Match
     const { error } = await supabase
       .from('matches')
       .update({
@@ -153,7 +147,6 @@ const BracketScores = () => {
       return alert(error.message);
     }
 
-    // 4. Auto-Advance Winner
     if (status === 'complete' && winnerId) {
       const { data: targetMatches } = await supabase
         .from('matches')
@@ -175,6 +168,18 @@ const BracketScores = () => {
     fetchMatches();
   };
 
+  const maxRound = Math.max(...matches.map(m => m.bracket_round), 0);
+  const rounds = Array.from({ length: maxRound }, (_, i) => i + 1);
+
+  const getRoundTitle = (r, total) => {
+    const diff = total - r;
+    if (diff === 0) return 'Championship';
+    if (diff === 1) return 'Semifinals';
+    if (diff === 2) return 'Quarterfinals';
+    if (diff === 3) return 'Round of 16';
+    return `Round ${r}`;
+  };
+
   return (
     <Layout title="Bracket Score Entry" isAdmin={true}>
       <div className="flex flex-col gap-8 py-4">
@@ -182,133 +187,148 @@ const BracketScores = () => {
         <div className="flex flex-wrap gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
           <div className="flex flex-col gap-1 min-w-[200px]">
             <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Age Group</label>
-            <select value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
+            <select value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white outline-none">
               {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
           <div className="flex flex-col gap-1 min-w-[200px]">
             <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Bracket</label>
-            <select value={selectedBracketId} onChange={e => setSelectedBracketId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
+            <select value={selectedBracketId} onChange={e => setSelectedBracketId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white outline-none">
               {brackets.map(b => <option key={b.id} value={b.id}>{b.round > 2 ? `[R${b.round}] ` : ''}{b.name}</option>)}
             </select>
           </div>
         </div>
 
-        {/* Inline Score Entry Table */}
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-brand-black text-white">
-              <tr>
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">Pos</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">Matchup</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 1</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 2</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 3</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Court</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Status</th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {matches.map(match => {
-                const s = matchScores[match.id] || { s1t1: 0, s1t2: 0, s2t1: 0, s2t2: 0, s3t1: 0, s3t2: 0 };
-                const t1 = teams[match.team1_id] || (match.source_match1_id ? 'TBD' : 'BYE');
-                const t2 = teams[match.team2_id] || (match.source_match2_id ? 'TBD' : 'BYE');
-                const isPlaceholder = !match.team1_id || !match.team2_id;
+        {/* Round-by-Round Score Entry */}
+        <div className="flex flex-col gap-12">
+          {rounds.map(roundNum => {
+            const roundMatches = matches.filter(m => m.bracket_round === roundNum);
+            if (roundMatches.length === 0) return null;
 
-                return (
-                  <tr key={match.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 text-xs font-black text-slate-300">R{match.bracket_round} P{match.bracket_position}</td>
-                    <td className="p-4">
-                      <div className="flex flex-col gap-1">
-                        <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winner_id === match.team1_id ? 'text-brand-teal' : 'text-slate-800'}`}>{t1}</span>
-                        <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winner_id === match.team2_id ? 'text-brand-teal' : 'text-slate-800'}`}>{t2}</span>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-col gap-2 items-center">
-                        <input 
-                          type="number"
-                          disabled={isPlaceholder}
-                          value={s.s1t1 === 0 ? '' : s.s1t1}
-                          onChange={e => handleScoreChange(match.id, 's1t1', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
-                        />
-                        <input 
-                          type="number"
-                          disabled={isPlaceholder}
-                          value={s.s1t2 === 0 ? '' : s.s1t2}
-                          onChange={e => handleScoreChange(match.id, 's1t2', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
-                        />
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-col gap-2 items-center">
-                        <input 
-                          type="number"
-                          disabled={isPlaceholder}
-                          value={s.s2t1 === 0 ? '' : s.s2t1}
-                          onChange={e => handleScoreChange(match.id, 's2t1', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
-                        />
-                        <input 
-                          type="number"
-                          disabled={isPlaceholder}
-                          value={s.s2t2 === 0 ? '' : s.s2t2}
-                          onChange={e => handleScoreChange(match.id, 's2t2', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
-                        />
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-col gap-2 items-center">
-                        <input 
-                          type="number"
-                          disabled={isPlaceholder}
-                          value={s.s3t1 === 0 ? '' : s.s3t1}
-                          onChange={e => handleScoreChange(match.id, 's3t1', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
-                        />
-                        <input 
-                          type="number"
-                          disabled={isPlaceholder}
-                          value={s.s3t2 === 0 ? '' : s.s3t2}
-                          onChange={e => handleScoreChange(match.id, 's3t2', e.target.value)}
-                          className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
-                        />
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex justify-center">
-                        <input 
-                          type="text"
-                          value={s.court}
-                          onChange={e => handleScoreChange(match.id, 'court', e.target.value)}
-                          placeholder="Ct"
-                          className="w-16 p-1 text-center border rounded font-black text-slate-600 bg-slate-50 focus:bg-white outline-none"
-                        />
-                      </div>
-                    </td>
-                    <td className="p-4 text-center">
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${match.status === 'complete' ? 'text-brand-teal' : 'text-brand-coral animate-pulse'}`}>
-                        {match.status === 'complete' ? 'COMPLETE' : (isPlaceholder ? 'WAITING' : 'PENDING')}
-                      </span>
-                    </td>
-                    <td className="p-4 text-center">
-                      <button 
-                        onClick={() => handleSave(match)}
-                        disabled={saving === match.id}
-                        className="bg-brand-black text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-brand-teal transition-colors disabled:opacity-50"
-                      >
-                        {saving === match.id ? '...' : 'SAVE'}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+            return (
+              <div key={roundNum} className="flex flex-col gap-4">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] px-2 border-l-4 border-brand-teal pl-3">
+                  {getRoundTitle(roundNum, maxRound)}
+                </h3>
+                
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-brand-black text-white">
+                      <tr>
+                        <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">Pos</th>
+                        <th className="p-4 text-[10px] font-black uppercase tracking-widest italic">Matchup</th>
+                        <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 1</th>
+                        <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 2</th>
+                        <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 3</th>
+                        <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Court</th>
+                        <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Status</th>
+                        <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {roundMatches.map(match => {
+                        const s = matchScores[match.id] || { s1t1: 0, s1t2: 0, s2t1: 0, s2t2: 0, s3t1: 0, s3t2: 0, court: '' };
+                        const t1 = teams[match.team1_id] || (match.source_match1_id ? 'TBD' : 'BYE');
+                        const t2 = teams[match.team2_id] || (match.source_match2_id ? 'TBD' : 'BYE');
+                        const isPlaceholder = !match.team1_id || !match.team2_id;
+
+                        return (
+                          <tr key={match.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="p-4 text-xs font-black text-slate-300">P{match.bracket_position}</td>
+                            <td className="p-4">
+                              <div className="flex flex-col gap-1">
+                                <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winner_id === match.team1_id ? 'text-brand-teal' : 'text-slate-800'}`}>{t1}</span>
+                                <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winner_id === match.team2_id ? 'text-brand-teal' : 'text-slate-800'}`}>{t2}</span>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex flex-col gap-2 items-center">
+                                <input 
+                                  type="number"
+                                  disabled={isPlaceholder}
+                                  value={s.s1t1 === 0 ? '' : s.s1t1}
+                                  onChange={e => handleScoreChange(match.id, 's1t1', e.target.value)}
+                                  className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                                />
+                                <input 
+                                  type="number"
+                                  disabled={isPlaceholder}
+                                  value={s.s1t2 === 0 ? '' : s.s1t2}
+                                  onChange={e => handleScoreChange(match.id, 's1t2', e.target.value)}
+                                  className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                                />
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex flex-col gap-2 items-center">
+                                <input 
+                                  type="number"
+                                  disabled={isPlaceholder}
+                                  value={s.s2t1 === 0 ? '' : s.s2t1}
+                                  onChange={e => handleScoreChange(match.id, 's2t1', e.target.value)}
+                                  className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                                />
+                                <input 
+                                  type="number"
+                                  disabled={isPlaceholder}
+                                  value={s.s2t2 === 0 ? '' : s.s2t2}
+                                  onChange={e => handleScoreChange(match.id, 's2t2', e.target.value)}
+                                  className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                                />
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex flex-col gap-2 items-center">
+                                <input 
+                                  type="number"
+                                  disabled={isPlaceholder}
+                                  value={s.s3t1 === 0 ? '' : s.s3t1}
+                                  onChange={e => handleScoreChange(match.id, 's3t1', e.target.value)}
+                                  className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                                />
+                                <input 
+                                  type="number"
+                                  disabled={isPlaceholder}
+                                  value={s.s3t2 === 0 ? '' : s.s3t2}
+                                  onChange={e => handleScoreChange(match.id, 's3t2', e.target.value)}
+                                  className="w-12 p-1 text-center border rounded font-black text-brand-teal bg-slate-50 focus:bg-white outline-none disabled:opacity-30"
+                                />
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex justify-center">
+                                <input 
+                                  type="text"
+                                  value={s.court}
+                                  onChange={e => handleScoreChange(match.id, 'court', e.target.value)}
+                                  placeholder="Ct"
+                                  className="w-16 p-1 text-center border rounded font-black text-slate-600 bg-slate-50 focus:bg-white outline-none"
+                                />
+                              </div>
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className={`text-[10px] font-black uppercase tracking-widest ${match.status === 'complete' ? 'text-brand-teal' : (isPlaceholder ? 'text-slate-300' : 'text-brand-coral animate-pulse')}`}>
+                                {match.status === 'complete' ? 'COMPLETE' : (isPlaceholder ? 'WAITING' : 'PENDING')}
+                              </span>
+                            </td>
+                            <td className="p-4 text-center">
+                              <button 
+                                onClick={() => handleSave(match)}
+                                disabled={saving === match.id}
+                                className="bg-brand-black text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-brand-teal transition-colors disabled:opacity-50"
+                              >
+                                {saving === match.id ? '...' : 'SAVE'}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </Layout>
