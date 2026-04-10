@@ -144,7 +144,7 @@ const PoolScores = () => {
           <div className="flex flex-col gap-1 min-w-[200px]">
             <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Pool</label>
             <select value={selectedPoolId} onChange={e => setSelectedPoolId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
-              {pools.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {pools.map(p => <option key={p.id} value={p.id}>{p.round > 1 ? `[R${p.round}] ` : ''}{p.name}</option>)}
             </select>
           </div>
         </div>

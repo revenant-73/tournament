@@ -22,7 +22,6 @@ const BracketsTV = () => {
         return;
       }
 
-      // 1. Fetch all age groups
       const { data: ageGroups } = await supabase
         .from('age_groups')
         .select('*')
@@ -36,7 +35,6 @@ const BracketsTV = () => {
 
       const ageGroupIds = ageGroups.map(ag => ag.id);
 
-      // 2. Fetch all brackets, teams, and bracket matches
       const [
         { data: allBrackets },
         { data: allTeamsData },
@@ -53,7 +51,6 @@ const BracketsTV = () => {
       }, {}) || {};
       setTeams(teamMap);
 
-      // 3. Organize data
       const organizedData = ageGroups.map(ag => {
         const agBrackets = allBrackets?.filter(b => b.age_group_id === ag.id) || [];
         return {
@@ -71,7 +68,6 @@ const BracketsTV = () => {
 
     fetchAllBracketsData();
 
-    // Subscribe to all matches for realtime
     const subscription = supabase
       .channel('brackets-tv-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, 
@@ -86,10 +82,13 @@ const BracketsTV = () => {
 
   if (loading) return <div className="bg-brand-black min-h-screen text-white flex items-center justify-center p-8">Loading TV View...</div>;
 
-  const getRoundTitle = (roundNum) => {
-    if (roundNum === 1) return 'QF';
-    if (roundNum === 2) return 'SF';
-    return 'Final';
+  const getRoundTitle = (r, total) => {
+    const diff = total - r;
+    if (diff === 0) return 'Final';
+    if (diff === 1) return 'SF';
+    if (diff === 2) return 'QF';
+    if (diff === 3) return 'R16';
+    return `R${r}`;
   };
 
   return (
@@ -103,53 +102,61 @@ const BracketsTV = () => {
         </div>
       </div>
 
-      <div className="flex flex-col gap-8 overflow-hidden h-[calc(100vh-100px)]">
+      <div className="flex flex-col gap-8 overflow-y-auto no-scrollbar h-[calc(100vh-100px)]">
         {data.map(ag => (
           <div key={ag.id} className="flex flex-col gap-4">
             <h2 className="text-xl font-black uppercase italic tracking-tighter text-white border-l-4 border-brand-teal pl-3">{ag.name}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {ag.brackets.map(bracket => (
-                <div key={bracket.id} className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-brand-coral">{bracket.name} Bracket</span>
-                  </div>
+              {ag.brackets.map(bracket => {
+                const maxRound = Math.max(...bracket.matches.map(m => m.bracket_round), 0);
+                const rounds = Array.from({ length: maxRound }, (_, i) => i + 1);
+                
+                return (
+                  <div key={bracket.id} className="bg-white/5 rounded-2xl p-4 border border-white/10">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-brand-coral">{bracket.name} Bracket</span>
+                      {bracket.round > 2 && <span className="text-[8px] font-black uppercase text-white/40">Round {bracket.round}</span>}
+                    </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    {[1, 2, 3].map(roundNum => {
-                      const roundMatches = bracket.matches.filter(m => m.bracket_round === roundNum);
-                      if (roundMatches.length === 0) return <div key={roundNum}></div>;
+                    <div className={`grid gap-2 grid-cols-${rounds.length || 1}`}>
+                      {rounds.map(roundNum => {
+                        const roundMatches = bracket.matches.filter(m => m.bracket_round === roundNum);
+                        if (roundMatches.length === 0) return null;
 
-                      return (
-                        <div key={roundNum} className="flex flex-col gap-2">
-                          <div className="text-[8px] font-black text-white/20 uppercase tracking-widest text-center border-b border-white/5 pb-1">{getRoundTitle(roundNum)}</div>
-                          {roundMatches.map(match => {
-                            const t1Name = match.team1_id ? teams[match.team1_id] : (match.bracket_round === 1 ? 'BYE' : 'TBD');
-                            const t2Name = match.team2_id ? teams[match.team2_id] : (match.bracket_round === 1 ? 'BYE' : 'TBD');
+                        return (
+                          <div key={roundNum} className="flex flex-col gap-2">
+                            <div className="text-[8px] font-black text-white/20 uppercase tracking-widest text-center border-b border-white/5 pb-1">
+                              {getRoundTitle(roundNum, maxRound)}
+                            </div>
+                            {roundMatches.map(match => {
+                              const t1Name = match.team1_id ? teams[match.team1_id] : (match.bracket_round === 1 ? 'BYE' : 'TBD');
+                              const t2Name = match.team2_id ? teams[match.team2_id] : (match.bracket_round === 1 ? 'BYE' : 'TBD');
 
-                            return (
-                              <div key={match.id} className="bg-white/5 p-2 rounded-lg border border-white/5 flex flex-col gap-1">
-                                {match.court && (
-                                  <div className="text-[7px] font-black text-white/20 uppercase tracking-widest text-center border-b border-white/5 mb-1 pb-1">
-                                    Court {match.court}
+                              return (
+                                <div key={match.id} className="bg-white/5 p-2 rounded-lg border border-white/5 flex flex-col gap-1">
+                                  {match.court && (
+                                    <div className="text-[7px] font-black text-white/20 uppercase tracking-widest text-center border-b border-white/5 mb-1 pb-1">
+                                      Ct {match.court}
+                                    </div>
+                                  )}
+                                  <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winner_id && match.winner_id === match.team1_id ? 'text-brand-teal' : 'text-white/40'}`}>
+                                    <span className="truncate">{t1Name}</span>
+                                    {match.status === 'complete' && <span>W</span>}
                                   </div>
-                                )}
-                                <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winner_id === match.team1_id ? 'text-brand-teal' : 'text-white/40'}`}>
-                                  <span className="truncate">{t1Name}</span>
-                                  {match.status === 'complete' && <span>{match.winner_id === match.team1_id ? 'W' : 'L'}</span>}
+                                  <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winner_id && match.winner_id === match.team2_id ? 'text-brand-teal' : 'text-white/40'}`}>
+                                    <span className="truncate">{t2Name}</span>
+                                    {match.status === 'complete' && <span>W</span>}
+                                  </div>
                                 </div>
-                                <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winner_id === match.team2_id ? 'text-brand-teal' : 'text-white/40'}`}>
-                                  <span className="truncate">{t2Name}</span>
-                                  {match.status === 'complete' && <span>{match.winner_id === match.team2_id ? 'W' : 'L'}</span>}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}

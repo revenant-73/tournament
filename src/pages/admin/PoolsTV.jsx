@@ -108,7 +108,7 @@ const PoolsTV = () => {
           <div key={pool.id} className="bg-white/5 rounded-[2rem] p-8 border border-white/10 flex flex-col gap-6 shadow-2xl backdrop-blur-sm">
             <div className="flex justify-between items-center border-b border-white/10 pb-4">
               <div className="flex flex-col">
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-brand-teal">{pool.ageGroupName}</span>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-brand-teal">{pool.ageGroupName}{pool.round > 1 ? ` • Round ${pool.round}` : ''}</span>
                 <span className="text-2xl font-black uppercase italic tracking-tighter">{pool.name}</span>
               </div>
               <div className="bg-white/10 px-4 py-2 rounded-xl text-center">

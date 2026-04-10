@@ -36,6 +36,7 @@ create table pools (
   age_group_id uuid references age_groups(id) on delete cascade not null,
   name text not null,
   court text not null,
+  round integer not null default 1,
   display_order integer not null default 0
 );
 
@@ -52,6 +53,8 @@ create table brackets (
   id uuid primary key default uuid_generate_v4(),
   age_group_id uuid references age_groups(id) on delete cascade not null,
   name text not null, -- Gold or Silver
+  round integer not null default 2,
+  size integer not null default 6, -- 4, 6, 8, 12, etc.
   display_order integer not null default 0
 );
 

@@ -189,7 +189,7 @@ const BracketScores = () => {
           <div className="flex flex-col gap-1 min-w-[200px]">
             <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Bracket</label>
             <select value={selectedBracketId} onChange={e => setSelectedBracketId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
-              {brackets.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              {brackets.map(b => <option key={b.id} value={b.id}>{b.round > 2 ? `[R${b.round}] ` : ''}{b.name}</option>)}
             </select>
           </div>
         </div>
