@@ -95,69 +95,67 @@ const PoolScreen = () => {
         {/* Match Schedule */}
         <section>
           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 px-2">Match Schedule</h3>
-          <div className="flex flex-col gap-4">
-            {matches.map((match, idx) => {
-              const t1 = teams.find(t => t.id === match.team1_id);
-              const t2 = teams.find(t => t.id === match.team2_id);
-              const isComplete = match.status === 'complete';
+          <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th className="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-12 text-center">#</th>
+                  <th className="px-2 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Matchup</th>
+                  <th className="px-2 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Sets</th>
+                  <th className="hidden sm:table-cell px-2 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Scores</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {matches.map((match, idx) => {
+                  const t1 = teams.find(t => t.id === match.team1_id);
+                  const t2 = teams.find(t => t.id === match.team2_id);
+                  const isComplete = match.status === 'complete';
 
-              const t1Sets = (match.set1_team1 > match.set1_team2 ? 1 : 0) + 
-                             (match.set2_team1 > match.set2_team2 ? 1 : 0) + 
-                             ((match.set3_team1 || 0) > (match.set3_team2 || 0) ? 1 : 0);
-              const t2Sets = (match.set1_team2 > match.set1_team1 ? 1 : 0) + 
-                             (match.set2_team2 > match.set2_team1 ? 1 : 0) + 
-                             ((match.set3_team2 || 0) > (match.set3_team1 || 0) ? 1 : 0);
+                  const t1Sets = (match.set1_team1 > match.set1_team2 ? 1 : 0) + 
+                                 (match.set2_team1 > match.set2_team2 ? 1 : 0) + 
+                                 ((match.set3_team1 || 0) > (match.set3_team2 || 0) ? 1 : 0);
+                  const t2Sets = (match.set1_team2 > match.set1_team1 ? 1 : 0) + 
+                                 (match.set2_team2 > match.set2_team1 ? 1 : 0) + 
+                                 ((match.set3_team2 || 0) > (match.set3_team1 || 0) ? 1 : 0);
 
-              return (
-                <div key={match.id} className={`bg-white p-6 rounded-[2rem] shadow-sm border transition-all ${isComplete ? 'border-slate-100 opacity-60' : 'border-teal-100 shadow-md shadow-teal-500/5 scale-[1.02]'}`}>
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="flex gap-4 items-center">
-                      <span className="text-[10px] font-black text-brand-teal uppercase tracking-[0.2em]">Match {match.match_order || idx + 1}</span>
-                      {match.court && (
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full">{match.court}</span>
-                      )}
-                    </div>
-                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${isComplete ? 'bg-slate-100 text-slate-400' : 'bg-teal-50 text-brand-teal animate-pulse'}`}>
-                      {isComplete ? 'Final' : 'Live Now'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex flex-col gap-3">
-                    {/* Team 1 Row */}
-                    <div className="flex justify-between items-center bg-slate-50/50 p-3 rounded-2xl">
-                      <div className="font-black text-slate-800 uppercase italic tracking-tighter text-xs flex-1 pr-4">
-                        {t1?.name || 'TBD'}
-                      </div>
-                      {isComplete && (
-                        <div className="text-xl font-black text-slate-900 italic tracking-tighter tabular-nums">
-                          {t1Sets}
+                  return (
+                    <tr key={match.id} className={!isComplete ? 'bg-teal-50/20' : 'opacity-60'}>
+                      <td className="px-4 py-4 text-center font-black text-slate-400 text-xs">
+                        {match.match_order || idx + 1}
+                      </td>
+                      <td className="px-2 py-4">
+                        <div className="flex flex-col gap-0.5">
+                          <div className={`text-xs font-black uppercase italic tracking-tighter ${isComplete && t1Sets > t2Sets ? 'text-slate-900' : 'text-slate-500'}`}>
+                            {t1?.name || 'TBD'}
+                          </div>
+                          <div className={`text-xs font-black uppercase italic tracking-tighter ${isComplete && t2Sets > t1Sets ? 'text-slate-900' : 'text-slate-500'}`}>
+                            {t2?.name || 'TBD'}
+                          </div>
                         </div>
-                      )}
-                    </div>
-
-                    {/* Team 2 Row */}
-                    <div className="flex justify-between items-center bg-slate-50/50 p-3 rounded-2xl">
-                      <div className="font-black text-slate-800 uppercase italic tracking-tighter text-xs flex-1 pr-4">
-                        {t2?.name || 'TBD'}
-                      </div>
-                      {isComplete && (
-                        <div className="text-xl font-black text-slate-900 italic tracking-tighter tabular-nums">
-                          {t2Sets}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {isComplete && (
-                    <div className="mt-6 pt-6 border-t border-slate-50 flex justify-center gap-6 text-[10px] font-black text-slate-400 tracking-[0.2em]">
-                      <span className="bg-slate-50 px-3 py-1 rounded-lg">{match.set1_team1}-{match.set1_team2}</span>
-                      <span className="bg-slate-50 px-3 py-1 rounded-lg">{match.set2_team1}-{match.set2_team2}</span>
-                      {match.set3_team1 > 0 && <span className="bg-slate-50 px-3 py-1 rounded-lg">{match.set3_team1}-{match.set3_team2}</span>}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                      </td>
+                      <td className="px-2 py-4 text-center">
+                        {isComplete ? (
+                          <div className="text-sm font-black text-slate-900 italic tabular-nums">
+                            {t1Sets}-{t2Sets}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-black text-brand-teal uppercase animate-pulse">Live</span>
+                        )}
+                      </td>
+                      <td className="hidden sm:table-cell px-2 py-4 text-center">
+                        {isComplete && (
+                          <div className="flex justify-center gap-2 text-[10px] font-bold text-slate-400">
+                            <span>{match.set1_team1}-{match.set1_team2}</span>
+                            <span>{match.set2_team1}-{match.set2_team2}</span>
+                            {match.set3_team1 > 0 && <span>{match.set3_team1}-{match.set3_team2}</span>}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </section>
       </div>
