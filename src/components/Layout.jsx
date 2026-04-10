@@ -29,8 +29,14 @@ const Layout = ({ children, title, isAdmin = false }) => {
         {children}
       </main>
 
-      <footer className="p-4 border-t border-gray-200 text-center text-xs text-gray-500">
-        © 2026 {tournament?.name || 'Tournament Management'}
+      <footer className="p-8 border-t border-slate-100 text-center flex flex-col gap-4">
+        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+          © 2026 {tournament?.name || 'Tournament Management'}
+        </p>
+        <div className="flex justify-center gap-6">
+          <Link to="/" className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-brand-teal transition-colors">Public Home</Link>
+          <Link to="/admin" className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-brand-teal transition-colors underline decoration-brand-teal/30 underline-offset-4">Admin Access</Link>
+        </div>
       </footer>
     </div>
   );
