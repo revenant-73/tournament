@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { ageGroups, pools, matches, teams } from '../../lib/db/schema';
+import { eq, asc } from 'drizzle-orm';
 import { validateSetScore, calculateMatchStats } from '../../lib/scoring';
 import Layout from '../../components/Layout';
 
 const PoolScores = () => {
   const navigate = useNavigate();
-  const [ageGroups, setAgeGroups] = useState([]);
+  const [ageGroupsList, setAgeGroupsList] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState('');
-  const [pools, setPools] = useState([]);
+  const [poolsList, setPoolsList] = useState([]);
   const [selectedPoolId, setSelectedPoolId] = useState('');
-  const [matches, setMatches] = useState([]);
-  const [teams, setTeams] = useState({});
+  const [matchesList, setMatchesList] = useState([]);
+  const [teamsMap, setTeamsMap] = useState({});
   const [matchScores, setMatchScores] = useState({}); // { matchId: { s1t1, s1t2, ... } }
   const [saving, setSaving] = useState(null); // track which match is saving
 
@@ -30,42 +32,65 @@ const PoolScores = () => {
   }, [selectedPoolId]);
 
   async function fetchAgeGroups() {
-    const tId = localStorage.getItem('tournamentId');
-    const { data } = await supabase.from('age_groups').select('*').eq('tournament_id', tId).order('display_order');
-    if (data) {
-      setAgeGroups(data);
-      if (data.length > 0) setSelectedGroupId(data[0].id);
+    try {
+      const tId = localStorage.getItem('tournamentId');
+      const data = await db.query.ageGroups.findMany({
+        where: eq(ageGroups.tournamentId, tId),
+        orderBy: [asc(ageGroups.displayOrder)]
+      });
+      if (data) {
+        setAgeGroupsList(data);
+        if (data.length > 0) setSelectedGroupId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching age groups:', error);
     }
   }
 
   async function fetchPools() {
-    const { data } = await supabase.from('pools').select('*').eq('age_group_id', selectedGroupId).order('display_order');
-    if (data) {
-      setPools(data);
-      if (data.length > 0) setSelectedPoolId(data[0].id);
+    try {
+      const data = await db.query.pools.findMany({
+        where: eq(pools.ageGroupId, selectedGroupId),
+        orderBy: [asc(pools.displayOrder)]
+      });
+      if (data) {
+        setPoolsList(data);
+        if (data.length > 0) setSelectedPoolId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching pools:', error);
     }
   }
 
   async function fetchMatches() {
-    const { data } = await supabase.from('matches').select('*').eq('pool_id', selectedPoolId).order('match_order');
-    const matchData = data || [];
-    setMatches(matchData);
-    
-    // Initialize scores
-    const scoresMap = {};
-    matchData.forEach(m => {
-      scoresMap[m.id] = {
-        s1t1: m.set1_team1 || 0, s1t2: m.set1_team2 || 0,
-        s2t1: m.set2_team1 || 0, s2t2: m.set2_team2 || 0,
-        s3t1: m.set3_team1 || 0, s3t2: m.set3_team2 || 0
-      };
-    });
-    setMatchScores(scoresMap);
-    
-    // Fetch teams for names
-    const { data: teamsData } = await supabase.from('teams').select('id, name').eq('age_group_id', selectedGroupId);
-    const teamMap = teamsData?.reduce((acc, t) => ({ ...acc, [t.id]: t.name }), {}) || {};
-    setTeams(teamMap);
+    try {
+      const data = await db.query.matches.findMany({
+        where: eq(matches.poolId, selectedPoolId),
+        orderBy: [asc(matches.matchOrder)]
+      });
+      const matchData = data || [];
+      setMatchesList(matchData);
+      
+      // Initialize scores
+      const scoresMap = {};
+      matchData.forEach(m => {
+        scoresMap[m.id] = {
+          s1t1: m.set1Team1 || 0, s1t2: m.set1Team2 || 0,
+          s2t1: m.set2Team1 || 0, s2t2: m.set2Team2 || 0,
+          s3t1: m.set3Team1 || 0, s3t2: m.set3Team2 || 0
+        };
+      });
+      setMatchScores(scoresMap);
+      
+      // Fetch teams for names
+      const teamsData = await db.query.teams.findMany({
+        where: eq(teams.ageGroupId, selectedGroupId)
+      });
+      const teamMap = teamsData?.reduce((acc, t) => ({ ...acc, [t.id]: t.name }), {}) || {};
+      setTeamsMap(teamMap);
+    } catch (error) {
+      console.error('Error fetching matches:', error);
+    }
   }
 
   const handleScoreChange = (matchId, field, value) => {
@@ -108,26 +133,26 @@ const PoolScores = () => {
     if (needsSet3) sets.push({ team1: scores.s3t1, team2: scores.s3t2 });
     
     const stats = calculateMatchStats(sets);
-    const winnerId = stats.winner === 1 ? match.team1_id : match.team2_id;
+    const winnerId = stats.winner === 1 ? match.team1Id : match.team2Id;
 
-    // 3. Update Supabase
-    const { error } = await supabase
-      .from('matches')
-      .update({
-        set1_team1: scores.s1t1, set1_team2: scores.s1t2,
-        set2_team1: scores.s2t1, set2_team2: scores.s2t2,
-        set3_team1: needsSet3 ? scores.s3t1 : 0, set3_team2: needsSet3 ? scores.s3t2 : 0,
-        status: 'complete',
-        winner_id: winnerId
-      })
-      .eq('id', match.id);
-
-    setSaving(null);
-    if (error) alert(error.message);
-    else {
+    // 3. Update Database
+    try {
+      await db.update(matches)
+        .set({
+          set1Team1: scores.s1t1, set1Team2: scores.s1t2,
+          set2Team1: scores.s2t1, set2Team2: scores.s2t2,
+          set3Team1: needsSet3 ? scores.s3t1 : 0, set3Team2: needsSet3 ? scores.s3t2 : 0,
+          status: 'complete',
+          winnerId: winnerId
+        })
+        .where(eq(matches.id, match.id));
+      
       // Refresh match list to show updated status/winners if needed
       fetchMatches();
+    } catch (error) {
+      alert(error.message);
     }
+    setSaving(null);
   };
 
   return (
@@ -138,13 +163,13 @@ const PoolScores = () => {
           <div className="flex flex-col gap-1 min-w-[200px]">
             <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Age Group</label>
             <select value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
-              {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              {ageGroupsList.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
           <div className="flex flex-col gap-1 min-w-[200px]">
             <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Pool</label>
             <select value={selectedPoolId} onChange={e => setSelectedPoolId(e.target.value)} className="p-2 border rounded-lg text-xs font-bold bg-white">
-              {pools.map(p => <option key={p.id} value={p.id}>{p.round > 1 ? `[R${p.round}] ` : ''}{p.name}</option>)}
+              {poolsList.map(p => <option key={p.id} value={p.id}>{p.round > 1 ? `[R${p.round}] ` : ''}{p.name}</option>)}
             </select>
           </div>
         </div>
@@ -165,16 +190,16 @@ const PoolScores = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {matches.map(match => {
+              {matchesList.map(match => {
                 const s = matchScores[match.id] || { s1t1: 0, s1t2: 0, s2t1: 0, s2t2: 0, s3t1: 0, s3t2: 0 };
                 return (
                   <tr key={match.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 text-xs font-black text-slate-300">M{match.match_order}</td>
+                    <td className="p-4 text-xs font-black text-slate-300">M{match.matchOrder}</td>
                     <td className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{match.court || '-'}</td>
                     <td className="p-4">
                       <div className="flex flex-col gap-1">
-                        <span className="text-sm font-black text-slate-800 uppercase italic tracking-tighter">{teams[match.team1_id]}</span>
-                        <span className="text-sm font-black text-slate-800 uppercase italic tracking-tighter">{teams[match.team2_id]}</span>
+                        <span className="text-sm font-black text-slate-800 uppercase italic tracking-tighter">{teamsMap[match.team1Id]}</span>
+                        <span className="text-sm font-black text-slate-800 uppercase italic tracking-tighter">{teamsMap[match.team2Id]}</span>
                       </div>
                     </td>
                     <td className="p-4">

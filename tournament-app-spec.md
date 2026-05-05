@@ -10,14 +10,14 @@ A branded, mobile-first tournament management web app for TVVC grass
 doubles events. Parents and coaches access live schedules and results by
 scanning a QR code at the door. The tournament director (admin) manages
 all tournament data --- teams, pools, scores, and brackets --- through a
-password-protected admin interface. The app is hosted on GitHub Pages
-with Supabase as the backend database.
+password-protected admin interface. The app is hosted on Vercel
+with Turso as the backend database.
 
 **Primary goal:** Replace third-party tournament platforms (AES,
 VolleyballLife) with a controlled, cost-free, consistently branded
 experience.
 
-**Hosting:** GitHub Pages (static) + Supabase (database/API)
+**Hosting:** Vercel (Production) + Turso (Database/API)
 
 **Access:** Public read-only via QR code. Admin write access via
 password.
@@ -230,26 +230,25 @@ Seeds 1-6 go to Gold bracket; seeds 7-12 go to Silver bracket.
 
 **Routing:** React Router v6
 
-**Database Client:** \@supabase/supabase-js
+**Database Client:** drizzle-orm
 
 **Styling:** CSS Modules or Tailwind CSS
 
-**Hosting:** GitHub Pages (static, deployed via gh-pages npm package)
+**Hosting:** Vercel
 
 **Build Tool:** Vite
 
 6.2 Backend / Database
 
-**Platform:** Supabase (PostgreSQL)
+**Platform:** Turso (libSQL)
 
 **Auth:** None --- simple password stored in tournaments table, verified
 client-side
 
-**Realtime:** Supabase Realtime subscriptions for live standings and
+**Realtime:** Polling (15s interval) for live standings and
 bracket updates
 
-**Security:** Supabase anon key exposed in frontend (accepted tradeoff
-for low-stakes internal app)
+**Security:** Environment variables for Turso Connection URL and Auth Token
 
 6.3 Key npm Packages
 
@@ -257,16 +256,14 @@ for low-stakes internal app)
 
 -   react-router-dom --- client-side routing
 
--   \@supabase/supabase-js --- database queries and realtime
-
--   gh-pages --- GitHub Pages deployment
+-   drizzle-orm + \@libsql/client --- database queries
 
 6.4 Repository Structure
 
 tournament-app/ ├── src/ │ ├── components/ \# Shared UI components │ ├──
 pages/ │ │ ├── public/ \# Home, Pool, Bracket, TeamList, Info │ │ └──
 admin/ \# Login, Setup, ScoreEntry, Seeding │ ├── lib/ │ │ ├──
-supabase.js \# Supabase client │ │ └── scoring.js \# Standings &
+db/ \# Drizzle schema and client │ │ └── scoring.js \# Standings &
 tiebreaker logic │ └── App.jsx \# Router setup ├── vite.config.js └──
 package.json
 

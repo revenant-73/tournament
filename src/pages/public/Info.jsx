@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { tournaments } from '../../lib/db/schema';
+import { eq } from 'drizzle-orm';
 import Layout from '../../components/Layout';
 
 const InfoScreen = () => {
@@ -8,13 +10,16 @@ const InfoScreen = () => {
 
   useEffect(() => {
     async function fetchInfo() {
-      const { data } = await supabase
-        .from('tournaments')
-        .select('*')
-        .eq('is_active', true)
-        .single();
-      setTournament(data);
-      setLoading(false);
+      try {
+        const data = await db.query.tournaments.findFirst({
+          where: eq(tournaments.isActive, true)
+        });
+        setTournament(data);
+      } catch (error) {
+        console.error('Error fetching info:', error);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchInfo();
   }, []);

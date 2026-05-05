@@ -48,10 +48,10 @@ export const generateBracketMatches = (ageGroupId, bracketId, size, seeds) => {
     if (s2 <= size) {
       // Both exist, this is a real R1 match
       round1Matches.push({
-        age_group_id: ageGroupId, bracket_id: bracketId, match_type: 'bracket',
-        bracket_round: 1, bracket_position: idx + 1,
-        team1_id: seeds[s1]?.id, team2_id: seeds[s2]?.id,
-        match_order: matches.length + 1, status: 'scheduled'
+        ageGroupId: ageGroupId, bracketId: bracketId, matchType: 'bracket',
+        bracketRound: 1, bracketPosition: idx + 1,
+        team1Id: seeds[s1]?.id, team2Id: seeds[s2]?.id,
+        matchOrder: matches.length + 1, status: 'scheduled'
       });
       round2Entrants.push({ sourceIndex: round1Matches.length - 1 });
     } else {
@@ -79,16 +79,16 @@ export const generateBracketMatches = (ageGroupId, bracketId, size, seeds) => {
       const entrant2 = previousRoundEntrants[i+1];
       
       const match = {
-        age_group_id: ageGroupId, bracket_id: bracketId, match_type: 'bracket',
-        bracket_round: r, bracket_position: (i / 2) + 1,
-        team1_id: entrant1.teamId || null,
-        team2_id: entrant2.teamId || null,
+        ageGroupId: ageGroupId, bracketId: bracketId, matchType: 'bracket',
+        bracketRound: r, bracketPosition: (i / 2) + 1,
+        team1Id: entrant1.teamId || null,
+        team2Id: entrant2.teamId || null,
         // placeholder for source_match_ids which caller will fill
         _meta: {
           source1: entrant1.sourceIndex !== undefined ? entrant1.sourceIndex : null,
           source2: entrant2.sourceIndex !== undefined ? entrant2.sourceIndex : null
         },
-        match_order: allMatches.length + 1, status: 'scheduled'
+        matchOrder: allMatches.length + 1, status: 'scheduled'
       };
       
       allMatches.push(match);
@@ -110,25 +110,25 @@ export const generatePoolMatches = (ageGroupId, poolId, teamsInPool, startOrder 
   if (count === 3) {
     const schedule = [{ t1: 0, t2: 2 }, { t1: 1, t2: 2 }, { t1: 0, t2: 1 }];
     matches = schedule.map((m, idx) => ({
-      age_group_id: ageGroupId, pool_id: poolId, match_type: 'pool',
-      team1_id: teamsInPool[m.t1].id, team2_id: teamsInPool[m.t2].id,
-      match_order: startOrder + idx, status: 'scheduled'
+      ageGroupId: ageGroupId, poolId: poolId, matchType: 'pool',
+      team1Id: teamsInPool[m.t1].id, team2Id: teamsInPool[m.t2].id,
+      matchOrder: startOrder + idx, status: 'scheduled'
     }));
   } else if (count === 4) {
     const schedule = [{ t1: 0, t2: 2 }, { t1: 1, t2: 3 }, { t1: 0, t2: 3 }, { t1: 1, t2: 2 }, { t1: 2, t2: 3 }, { t1: 0, t2: 1 }];
     matches = schedule.map((m, idx) => ({
-      age_group_id: ageGroupId, pool_id: poolId, match_type: 'pool',
-      team1_id: teamsInPool[m.t1].id, team2_id: teamsInPool[m.t2].id,
-      match_order: startOrder + idx, status: 'scheduled'
+      ageGroupId: ageGroupId, poolId: poolId, matchType: 'pool',
+      team1Id: teamsInPool[m.t1].id, team2Id: teamsInPool[m.t2].id,
+      matchOrder: startOrder + idx, status: 'scheduled'
     }));
   } else {
     // Standard Round Robin
     for (let i = 0; i < count; i++) {
       for (let j = i + 1; j < count; j++) {
         matches.push({
-          age_group_id: ageGroupId, pool_id: poolId, match_type: 'pool',
-          team1_id: teamsInPool[i].id, team2_id: teamsInPool[j].id,
-          match_order: startOrder + matches.length, status: 'scheduled'
+          ageGroupId: ageGroupId, poolId: poolId, matchType: 'pool',
+          team1Id: teamsInPool[i].id, team2Id: teamsInPool[j].id,
+          matchOrder: startOrder + matches.length, status: 'scheduled'
         });
       }
     }

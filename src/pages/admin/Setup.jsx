@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { tournaments, ageGroups, teams, pools, poolTeams, matches } from '../../lib/db/schema';
+import { eq, asc, and, sql } from 'drizzle-orm';
 import Layout from '../../components/Layout';
 
 const Setup = () => {
@@ -11,8 +13,8 @@ const Setup = () => {
     date: '',
     location: '',
     info: '',
-    admin_password: '',
-    is_active: true
+    adminPassword: '',
+    isActive: true
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -25,13 +27,15 @@ const Setup = () => {
     }
 
     async function fetchTournament() {
-      const { data, error } = await supabase
-        .from('tournaments')
-        .select('*')
-        .eq('is_active', true)
-        .single();
-      
-      if (data) setTournament(data);
+      try {
+        const data = await db.query.tournaments.findFirst({
+          where: eq(tournaments.isActive, true)
+        });
+        
+        if (data) setTournament(data);
+      } catch (error) {
+        console.error('Error fetching tournament:', error);
+      }
       setLoading(false);
     }
     fetchTournament();
@@ -41,27 +45,39 @@ const Setup = () => {
     e.preventDefault();
     setSaving(true);
     
-    let result;
-    if (tournament.id) {
-      result = await supabase
-        .from('tournaments')
-        .update(tournament)
-        .eq('id', tournament.id);
-    } else {
-      result = await supabase
-        .from('tournaments')
-        .insert([tournament])
-        .select();
-    }
-
-    if (result.error) {
-      alert('Error saving tournament: ' + result.error.message);
-    } else {
-      if (!tournament.id && result.data) {
-        setTournament(result.data[0]);
-        localStorage.setItem('tournamentId', result.data[0].id);
+    try {
+      if (tournament.id) {
+        await db.update(tournaments)
+          .set({
+            name: tournament.name,
+            date: tournament.date,
+            location: tournament.location,
+            info: tournament.info,
+            adminPassword: tournament.adminPassword,
+            isActive: tournament.isActive
+          })
+          .where(eq(tournaments.id, tournament.id));
+        alert('Tournament saved successfully!');
+      } else {
+        const result = await db.insert(tournaments)
+          .values({
+            name: tournament.name,
+            date: tournament.date,
+            location: tournament.location,
+            info: tournament.info,
+            adminPassword: tournament.adminPassword,
+            isActive: tournament.isActive
+          })
+          .returning();
+        
+        if (result && result[0]) {
+          setTournament(result[0]);
+          localStorage.setItem('tournamentId', result[0].id);
+          alert('Tournament created successfully!');
+        }
       }
-      alert('Tournament saved successfully!');
+    } catch (error) {
+      alert('Error saving tournament: ' + error.message);
     }
     setSaving(false);
   };
@@ -118,8 +134,8 @@ const Setup = () => {
                   <input
                     type="text"
                     required
-                    value={tournament.admin_password}
-                    onChange={e => setTournament({...tournament, admin_password: e.target.value})}
+                    value={tournament.adminPassword}
+                    onChange={e => setTournament({...tournament, adminPassword: e.target.value})}
                     className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal outline-none font-bold text-slate-800 transition-all shadow-sm"
                     placeholder="Enter password"
                   />
@@ -184,7 +200,7 @@ const Setup = () => {
 
 // Sub-components for better management
 const AgeGroupsManager = ({ tournamentId }) => {
-  const [ageGroups, setAgeGroups] = useState([]);
+  const [ageGroupsList, setAgeGroupsList] = useState([]);
   const [newName, setNewName] = useState('');
 
   useEffect(() => {
@@ -192,30 +208,40 @@ const AgeGroupsManager = ({ tournamentId }) => {
   }, [tournamentId]);
 
   async function fetchAgeGroups() {
-    const { data } = await supabase
-      .from('age_groups')
-      .select('*')
-      .eq('tournament_id', tournamentId)
-      .order('display_order');
-    if (data) setAgeGroups(data);
+    try {
+      const data = await db.query.ageGroups.findMany({
+        where: eq(ageGroups.tournamentId, tournamentId),
+        orderBy: [asc(ageGroups.displayOrder)]
+      });
+      if (data) setAgeGroupsList(data);
+    } catch (error) {
+      console.error('Error fetching age groups:', error);
+    }
   }
 
   const handleAdd = async () => {
     if (!newName) return;
-    const { error } = await supabase
-      .from('age_groups')
-      .insert([{ tournament_id: tournamentId, name: newName, display_order: ageGroups.length }]);
-    if (error) alert(error.message);
-    else {
+    try {
+      await db.insert(ageGroups).values({
+        tournamentId: tournamentId,
+        name: newName,
+        displayOrder: ageGroupsList.length
+      });
       setNewName('');
       fetchAgeGroups();
+    } catch (error) {
+      alert(error.message);
     }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Are you sure? This will delete all teams and pools in this group.')) return;
-    await supabase.from('age_groups').delete().eq('id', id);
-    fetchAgeGroups();
+    try {
+      await db.delete(ageGroups).where(eq(ageGroups.id, id));
+      fetchAgeGroups();
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   return (
@@ -231,7 +257,7 @@ const AgeGroupsManager = ({ tournamentId }) => {
         <button onClick={handleAdd} className="btn btn-primary px-8 text-sm uppercase tracking-widest">Add</button>
       </div>
       <div className="flex flex-col gap-3">
-        {ageGroups.map(group => (
+        {ageGroupsList.map(group => (
           <div key={group.id} className="bg-white p-5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm hover:shadow-md transition-all group">
             <span className="font-black text-slate-800 tracking-tight">{group.name}</span>
             <button onClick={() => handleDelete(group.id)} className="text-rose-400 hover:text-rose-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-rose-50 rounded-full opacity-0 group-hover:opacity-100 transition-all">Delete</button>
@@ -243,9 +269,9 @@ const AgeGroupsManager = ({ tournamentId }) => {
 };
 
 const TeamsManager = ({ tournamentId }) => {
-  const [ageGroups, setAgeGroups] = useState([]);
+  const [ageGroupsList, setAgeGroupsList] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState('');
-  const [teams, setTeams] = useState([]);
+  const [teamsList, setTeamsList] = useState([]);
   const [newTeamName, setNewTeamName] = useState('');
 
   useEffect(() => {
@@ -257,28 +283,53 @@ const TeamsManager = ({ tournamentId }) => {
   }, [selectedGroupId]);
 
   async function fetchAgeGroups() {
-    const { data } = await supabase.from('age_groups').select('*').eq('tournament_id', tournamentId).order('display_order');
-    if (data) {
-      setAgeGroups(data);
-      if (data.length > 0) setSelectedGroupId(data[0].id);
+    try {
+      const data = await db.query.ageGroups.findMany({
+        where: eq(ageGroups.tournamentId, tournamentId),
+        orderBy: [asc(ageGroups.displayOrder)]
+      });
+      if (data) {
+        setAgeGroupsList(data);
+        if (data.length > 0) setSelectedGroupId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching age groups:', error);
     }
   }
 
   async function fetchTeams() {
-    const { data } = await supabase.from('teams').select('*').eq('age_group_id', selectedGroupId).order('name');
-    if (data) setTeams(data);
+    try {
+      const data = await db.query.teams.findMany({
+        where: eq(teams.ageGroupId, selectedGroupId),
+        orderBy: [asc(teams.name)]
+      });
+      if (data) setTeamsList(data);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    }
   }
 
   const handleAddTeam = async () => {
     if (!newTeamName || !selectedGroupId) return;
-    await supabase.from('teams').insert([{ age_group_id: selectedGroupId, name: newTeamName }]);
-    setNewTeamName('');
-    fetchTeams();
+    try {
+      await db.insert(teams).values({
+        ageGroupId: selectedGroupId,
+        name: newTeamName
+      });
+      setNewTeamName('');
+      fetchTeams();
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const handleDeleteTeam = async (id) => {
-    await supabase.from('teams').delete().eq('id', id);
-    fetchTeams();
+    try {
+      await db.delete(teams).where(eq(teams.id, id));
+      fetchTeams();
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   return (
@@ -290,7 +341,7 @@ const TeamsManager = ({ tournamentId }) => {
           onChange={e => setSelectedGroupId(e.target.value)}
           className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all shadow-sm cursor-pointer"
         >
-          {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+          {ageGroupsList.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
       </div>
 
@@ -306,7 +357,7 @@ const TeamsManager = ({ tournamentId }) => {
       </div>
 
       <div className="flex flex-col gap-2">
-        {teams.map(team => (
+        {teamsList.map(team => (
           <div key={team.id} className="bg-white p-4 rounded-xl border border-slate-100 flex justify-between items-center shadow-sm hover:shadow-md transition-all group">
             <span className="font-bold text-slate-700 text-sm">{team.name}</span>
             <button onClick={() => handleDeleteTeam(team.id)} className="text-rose-400 hover:text-rose-600 text-lg px-2 group-hover:scale-125 transition-transform">×</button>
@@ -318,11 +369,11 @@ const TeamsManager = ({ tournamentId }) => {
 };
 
 const PoolsManager = ({ tournamentId }) => {
-  const [ageGroups, setAgeGroups] = useState([]);
+  const [ageGroupsList, setAgeGroupsList] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState('');
-  const [pools, setPools] = useState([]);
-  const [teams, setTeams] = useState([]);
-  const [poolTeams, setPoolTeams] = useState({}); // poolId -> array of team objects
+  const [poolsList, setPoolsList] = useState([]);
+  const [teamsList, setTeamsList] = useState([]);
+  const [poolTeamsMap, setPoolTeamsMap] = useState({}); // poolId -> array of team objects
   const [newPool, setNewPool] = useState({ name: '', court: '' });
 
   useEffect(() => {
@@ -337,82 +388,125 @@ const PoolsManager = ({ tournamentId }) => {
   }, [selectedGroupId]);
 
   async function fetchAgeGroups() {
-    const { data } = await supabase.from('age_groups').select('*').eq('tournament_id', tournamentId).order('display_order');
-    if (data) {
-      setAgeGroups(data);
-      if (data.length > 0) setSelectedGroupId(data[0].id);
+    try {
+      const data = await db.query.ageGroups.findMany({
+        where: eq(ageGroups.tournamentId, tournamentId),
+        orderBy: [asc(ageGroups.displayOrder)]
+      });
+      if (data) {
+        setAgeGroupsList(data);
+        if (data.length > 0) setSelectedGroupId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching age groups:', error);
     }
   }
 
   async function fetchPools() {
-    const { data } = await supabase.from('pools').select('*').eq('age_group_id', selectedGroupId).order('display_order');
-    if (data) {
-      setPools(data);
-      // Fetch teams for each pool
-      const poolTeamData = {};
-      for (const pool of data) {
-        const { data: pt } = await supabase.from('pool_teams').select('teams(id, name)').eq('pool_id', pool.id);
-        poolTeamData[pool.id] = pt?.map(p => p.teams) || [];
+    try {
+      const data = await db.query.pools.findMany({
+        where: eq(pools.ageGroupId, selectedGroupId),
+        with: {
+          poolTeams: {
+            with: {
+              team: true
+            }
+          }
+        },
+        orderBy: [asc(pools.displayOrder)]
+      });
+      if (data) {
+        setPoolsList(data);
+        const ptData = {};
+        data.forEach(p => {
+          ptData[p.id] = p.poolTeams.map(pt => pt.team);
+        });
+        setPoolTeamsMap(ptData);
       }
-      setPoolTeams(poolTeamData);
+    } catch (error) {
+      console.error('Error fetching pools:', error);
     }
   }
 
   async function fetchTeams() {
-    const { data } = await supabase.from('teams').select('*').eq('age_group_id', selectedGroupId).order('name');
-    if (data) setTeams(data);
+    try {
+      const data = await db.query.teams.findMany({
+        where: eq(teams.ageGroupId, selectedGroupId),
+        orderBy: [asc(teams.name)]
+      });
+      if (data) setTeamsList(data);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    }
   }
 
   const handleAddPool = async () => {
     if (!newPool.name || !newPool.court || !selectedGroupId) return;
-    await supabase.from('pools').insert([{ 
-      age_group_id: selectedGroupId, 
-      name: newPool.name, 
-      court: newPool.court, 
-      display_order: pools.length 
-    }]);
-    setNewPool({ name: '', court: '' });
-    fetchPools();
+    try {
+      await db.insert(pools).values({ 
+        ageGroupId: selectedGroupId, 
+        name: newPool.name, 
+        court: newPool.court, 
+        displayOrder: poolsList.length 
+      });
+      setNewPool({ name: '', court: '' });
+      fetchPools();
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const handleDeletePool = async (id) => {
     if (!confirm('Delete pool and all its matches?')) return;
-    await supabase.from('pools').delete().eq('id', id);
-    fetchPools();
+    try {
+      await db.delete(pools).where(eq(pools.id, id));
+      fetchPools();
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const handleAssignTeam = async (poolId, teamId) => {
     if (!teamId) return;
-    await supabase.from('pool_teams').insert([{ pool_id: poolId, team_id: teamId }]);
-    fetchPools();
+    try {
+      await db.insert(poolTeams).values({ poolId, teamId });
+      fetchPools();
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const handleRemoveTeam = async (poolId, teamId) => {
-    await supabase.from('pool_teams').delete().eq('pool_id', poolId).eq('team_id', teamId);
-    fetchPools();
+    try {
+      await db.delete(poolTeams).where(and(eq(poolTeams.poolId, poolId), eq(poolTeams.teamId, teamId)));
+      fetchPools();
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const generateMatches = async (poolId) => {
-    const teamsInPool = poolTeams[poolId] || [];
+    const teamsInPool = poolTeamsMap[poolId] || [];
     if (teamsInPool.length < 2) {
       alert('Need at least 2 teams to generate matches');
       return;
     }
 
-    let matches = [];
+    let matchesToCreate = [];
     if (teamsInPool.length === 3) {
       const schedule = [
         { t1: 0, t2: 2, ref: 1 }, // 1v3 Ref 2
         { t1: 1, t2: 2, ref: 0 }, // 2v3 Ref 1
         { t1: 0, t2: 1, ref: 2 }  // 1v2 Ref 3
       ];
-      matches = schedule.map((m, idx) => ({
-        age_group_id: selectedGroupId,
-        pool_id: poolId,
-        match_type: 'pool',
-        team1_id: teamsInPool[m.t1].id,
-        team2_id: teamsInPool[m.t2].id,
-        match_order: idx + 1,
+      matchesToCreate = schedule.map((m, idx) => ({
+        ageGroupId: selectedGroupId,
+        poolId: poolId,
+        matchType: 'pool',
+        team1Id: teamsInPool[m.t1].id,
+        team2Id: teamsInPool[m.t2].id,
+        refTeamId: teamsInPool[m.ref].id,
+        matchOrder: idx + 1,
         status: 'scheduled'
       }));
     } else if (teamsInPool.length === 4) {
@@ -424,17 +518,17 @@ const PoolsManager = ({ tournamentId }) => {
         { t1: 2, t2: 3, ref: 0 }, // 3v4 Ref 1
         { t1: 0, t2: 1, ref: 2 }  // 1v2 Ref 3
       ];
-      matches = schedule.map((m, idx) => ({
-        age_group_id: selectedGroupId,
-        pool_id: poolId,
-        match_type: 'pool',
-        team1_id: teamsInPool[m.t1].id,
-        team2_id: teamsInPool[m.t2].id,
-        match_order: idx + 1,
+      matchesToCreate = schedule.map((m, idx) => ({
+        ageGroupId: selectedGroupId,
+        poolId: poolId,
+        matchType: 'pool',
+        team1Id: teamsInPool[m.t1].id,
+        team2Id: teamsInPool[m.t2].id,
+        refTeamId: teamsInPool[m.ref].id,
+        matchOrder: idx + 1,
         status: 'scheduled'
       }));
     } else if (teamsInPool.length === 5) {
-      const pool = pools.find(p => p.id === poolId);
       const schedule = [
         // Wave 1
         { t1: 0, t2: 3, ref: 3, court: '1' }, // 1v4 Ref 4
@@ -452,13 +546,14 @@ const PoolsManager = ({ tournamentId }) => {
         { t1: 0, t2: 1, ref: 4, court: '1' }, // 1v2 Ref 5
         { t1: 2, t2: 3, ref: 2, court: '2' }  // 3v4 Ref 3
       ];
-      matches = schedule.map((m, idx) => ({
-        age_group_id: selectedGroupId,
-        pool_id: poolId,
-        match_type: 'pool',
-        team1_id: teamsInPool[m.t1].id,
-        team2_id: teamsInPool[m.t2].id,
-        match_order: idx + 1,
+      matchesToCreate = schedule.map((m, idx) => ({
+        ageGroupId: selectedGroupId,
+        poolId: poolId,
+        matchType: 'pool',
+        team1Id: teamsInPool[m.t1].id,
+        team2Id: teamsInPool[m.t2].id,
+        refTeamId: teamsInPool[m.ref].id,
+        matchOrder: idx + 1,
         court: `C${m.court}`,
         status: 'scheduled'
       }));
@@ -466,29 +561,32 @@ const PoolsManager = ({ tournamentId }) => {
       // Basic Round Robin for other sizes
       for (let i = 0; i < teamsInPool.length; i++) {
         for (let j = i + 1; j < teamsInPool.length; j++) {
-          matches.push({
-            age_group_id: selectedGroupId,
-            pool_id: poolId,
-            match_type: 'pool',
-            team1_id: teamsInPool[i].id,
-            team2_id: teamsInPool[j].id,
-            match_order: matches.length + 1,
+          matchesToCreate.push({
+            ageGroupId: selectedGroupId,
+            poolId: poolId,
+            matchType: 'pool',
+            team1Id: teamsInPool[i].id,
+            team2Id: teamsInPool[j].id,
+            matchOrder: matchesToCreate.length + 1,
             status: 'scheduled'
           });
         }
       }
     }
 
-    if (confirm(`Generate ${matches.length} matches for this pool? This will delete existing matches.`)) {
-      await supabase.from('matches').delete().eq('pool_id', poolId);
-      const { error } = await supabase.from('matches').insert(matches);
-      if (error) alert(error.message);
-      else alert('Matches generated!');
+    if (confirm(`Generate ${matchesToCreate.length} matches for this pool? This will delete existing matches.`)) {
+      try {
+        await db.delete(matches).where(eq(matches.poolId, poolId));
+        await db.insert(matches).values(matchesToCreate);
+        alert('Matches generated!');
+      } catch (error) {
+        alert(error.message);
+      }
     }
   };
 
-  const unassignedTeams = teams.filter(t => 
-    !Object.values(poolTeams).flat().some(pt => pt.id === t.id)
+  const unassignedTeams = teamsList.filter(t => 
+    !Object.values(poolTeamsMap).flat().some(pt => pt.id === t.id)
   );
 
   return (
@@ -500,7 +598,7 @@ const PoolsManager = ({ tournamentId }) => {
           onChange={e => setSelectedGroupId(e.target.value)}
           className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all shadow-sm cursor-pointer"
         >
-          {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+          {ageGroupsList.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
         </select>
       </div>
 
@@ -530,7 +628,7 @@ const PoolsManager = ({ tournamentId }) => {
 
       {/* Pools List */}
       <div className="flex flex-col gap-8">
-        {pools.map(pool => (
+        {poolsList.map(pool => (
           <div key={pool.id} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-all">
             <div className="bg-slate-50 p-5 flex justify-between items-center border-b border-slate-100">
               <div className="flex flex-col">
@@ -543,7 +641,7 @@ const PoolsManager = ({ tournamentId }) => {
             <div className="p-6 flex flex-col gap-6">
               {/* Teams in Pool */}
               <div className="flex flex-wrap gap-2 min-h-[2rem]">
-                {poolTeams[pool.id]?.length > 0 ? poolTeams[pool.id]?.map(team => (
+                {poolTeamsMap[pool.id]?.length > 0 ? poolTeamsMap[pool.id]?.map(team => (
                   <div key={team.id} className="bg-teal-50 text-brand-teal px-4 py-2 rounded-full text-[10px] font-black border border-teal-100 flex items-center gap-3 uppercase tracking-wider">
                     {team.name}
                     <button onClick={() => handleRemoveTeam(pool.id, team.id)} className="text-teal-300 hover:text-rose-500 font-black text-sm">×</button>

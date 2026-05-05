@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { teams } from '../../lib/db/schema';
+import { eq, asc } from 'drizzle-orm';
 import { Link } from 'react-router-dom';
 import Layout from '../../components/Layout';
 
 const TeamList = () => {
-  const [teams, setTeams] = useState([]);
+  const [teamsList, setTeamsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const selectedAgeGroupId = localStorage.getItem('selectedAgeGroupId');
 
@@ -12,34 +14,44 @@ const TeamList = () => {
     async function fetchTeams() {
       if (!selectedAgeGroupId) return;
       
-      const { data, error } = await supabase
-        .from('teams')
-        .select(`
-          id,
-          name,
-          pool_teams (
-            pool_id,
-            pools (
-              name,
-              court
-            )
-          ),
-          m1:matches!team1_id(bracket_id, brackets(name)),
-          m2:matches!team2_id(bracket_id, brackets(name))
-        `)
-        .eq('age_group_id', selectedAgeGroupId)
-        .order('name');
+      try {
+        const data = await db.query.teams.findMany({
+          where: eq(teams.ageGroupId, selectedAgeGroupId),
+          with: {
+            poolTeams: {
+              with: {
+                pool: true
+              }
+            },
+            matchesAsTeam1: {
+              with: {
+                bracket: true
+              }
+            },
+            matchesAsTeam2: {
+              with: {
+                bracket: true
+              }
+            }
+          },
+          orderBy: [asc(teams.name)]
+        });
 
-      if (error) {
-        console.error('Error fetching teams:', error);
-      } else {
         // Consolidate unique brackets for each team
         const formatted = data.map(team => {
-          const bracketMatches = [...(team.m1 || []), ...(team.m2 || [])].filter(m => m.bracket_id);
-          const uniqueBrackets = Array.from(new Map(bracketMatches.map(m => [m.bracket_id, m.brackets])).values());
+          const bracketMatches = [
+            ...(team.matchesAsTeam1 || []),
+            ...(team.matchesAsTeam2 || [])
+          ].filter(m => m.bracketId);
+          
+          const uniqueBrackets = Array.from(
+            new Map(bracketMatches.map(m => [m.bracketId, m.bracket])).values()
+          );
           return { ...team, uniqueBrackets };
         });
-        setTeams(formatted);
+        setTeamsList(formatted);
+      } catch (error) {
+        console.error('Error fetching teams:', error);
       }
       setLoading(false);
     }
@@ -51,18 +63,18 @@ const TeamList = () => {
   return (
     <Layout title="Teams">
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {teams.length > 0 ? (
+        {teamsList.length > 0 ? (
           <div className="divide-y divide-gray-100">
-            {teams.map(team => (
+            {teamsList.map(team => (
               <div key={team.id} className="p-4 flex flex-col gap-2">
                 <span className="font-bold text-gray-900">{team.name}</span>
                 <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest">
-                  {team.pool_teams?.length > 0 ? (
+                  {team.poolTeams?.length > 0 ? (
                     <Link 
-                      to={`/pool/${team.pool_teams[0].pool_id}`}
+                      to={`/pool/${team.poolTeams[0].poolId}`}
                       className="text-brand-blue border border-brand-blue/20 bg-blue-50/50 px-2 py-1 rounded"
                     >
-                      {team.pool_teams[0].pools.name} • {team.pool_teams[0].pools.court}
+                      {team.poolTeams[0].pool.name} • {team.poolTeams[0].pool.court}
                     </Link>
                   ) : (
                     <span className="text-gray-400 border border-gray-100 bg-gray-50/50 px-2 py-1 rounded italic">Not assigned to pool</span>

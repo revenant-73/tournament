@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { tournaments } from '../../lib/db/schema';
+import { eq } from 'drizzle-orm';
 import Layout from '../../components/Layout';
 
 const Dashboard = () => {
@@ -18,13 +20,15 @@ const Dashboard = () => {
 
     // 2. Fetch Active Tournament
     async function fetchTournament() {
-      const { data, error } = await supabase
-        .from('tournaments')
-        .select('*')
-        .eq('is_active', true)
-        .single();
-      
-      if (data) setTournament(data);
+      try {
+        const data = await db.query.tournaments.findFirst({
+          where: eq(tournaments.isActive, true)
+        });
+        
+        if (data) setTournament(data);
+      } catch (error) {
+        console.error('Error fetching tournament:', error);
+      }
       setLoading(false);
     }
     fetchTournament();

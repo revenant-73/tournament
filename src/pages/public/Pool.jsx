@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { pools, poolTeams, matches } from '../../lib/db/schema';
+import { eq, asc } from 'drizzle-orm';
 import { calculateStandings } from '../../lib/scoring';
 import Layout from '../../components/Layout';
 
@@ -8,57 +10,53 @@ const PoolScreen = () => {
   const { id } = useParams();
   const [pool, setPool] = useState(null);
   const [teams, setTeams] = useState([]);
-  const [matches, setMatches] = useState([]);
+  const [matchesList, setMatchesList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchPoolData() {
-      // 1. Fetch pool details
-      const { data: poolData } = await supabase
-        .from('pools')
-        .select('*')
-        .eq('id', id)
-        .single();
-      setPool(poolData);
+      try {
+        // 1. Fetch pool details
+        const poolData = await db.query.pools.findFirst({
+          where: eq(pools.id, id)
+        });
+        setPool(poolData);
 
-      // 2. Fetch teams in this pool
-      const { data: poolTeamsData } = await supabase
-        .from('pool_teams')
-        .select('team_id, teams(id, name)')
-        .eq('pool_id', id);
-      
-      const extractedTeams = poolTeamsData?.map(pt => pt.teams) || [];
-      setTeams(extractedTeams);
+        // 2. Fetch teams in this pool
+        const poolTeamsData = await db.query.poolTeams.findMany({
+          where: eq(poolTeams.poolId, id),
+          with: {
+            team: true
+          }
+        });
+        
+        const extractedTeams = poolTeamsData?.map(pt => pt.team) || [];
+        setTeams(extractedTeams);
 
-      // 3. Fetch matches in this pool
-      const { data: matchesData } = await supabase
-        .from('matches')
-        .select('*')
-        .eq('pool_id', id)
-        .order('match_order');
-      setMatches(matchesData || []);
-
+        // 3. Fetch matches in this pool
+        const matchesData = await db.query.matches.findMany({
+          where: eq(matches.poolId, id),
+          orderBy: [asc(matches.matchOrder)]
+        });
+        setMatchesList(matchesData || []);
+      } catch (error) {
+        console.error('Error fetching pool data:', error);
+      }
       setLoading(false);
     }
     fetchPoolData();
 
-    // Subscribe to realtime updates for matches
-    const subscription = supabase
-      .channel(`pool-${id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, 
-        () => fetchPoolData()
-      )
-      .subscribe();
+    // Note: Turso does not support real-time subscriptions like Supabase.
+    // For live updates, you could implement polling with setInterval.
+    const interval = setInterval(fetchPoolData, 30000); // Poll every 30 seconds
 
-    return () => {
-      supabase.removeChannel(subscription);
-    };
+    return () => clearInterval(interval);
   }, [id]);
 
   if (loading) return <Layout title="Loading..."><div className="p-8 text-center">Loading Pool...</div></Layout>;
   if (!pool) return <Layout title="Error"><div className="p-8 text-center">Pool not found</div></Layout>;
 
-  const standings = calculateStandings(teams, matches);
+  const standings = calculateStandings(teams, matchesList);
 
   return (
     <Layout title={`${pool.name} • ${pool.court}`}>
@@ -106,22 +104,22 @@ const PoolScreen = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {matches.map((match, idx) => {
-                  const t1 = teams.find(t => t.id === match.team1_id);
-                  const t2 = teams.find(t => t.id === match.team2_id);
+                {matchesList.map((match, idx) => {
+                  const t1 = teams.find(t => t.id === match.team1Id);
+                  const t2 = teams.find(t => t.id === match.team2Id);
                   const isComplete = match.status === 'complete';
 
-                  const t1Sets = (match.set1_team1 > match.set1_team2 ? 1 : 0) + 
-                                 (match.set2_team1 > match.set2_team2 ? 1 : 0) + 
-                                 ((match.set3_team1 || 0) > (match.set3_team2 || 0) ? 1 : 0);
-                  const t2Sets = (match.set1_team2 > match.set1_team1 ? 1 : 0) + 
-                                 (match.set2_team2 > match.set2_team1 ? 1 : 0) + 
-                                 ((match.set3_team2 || 0) > (match.set3_team1 || 0) ? 1 : 0);
+                  const t1Sets = (match.set1Team1 > match.set1Team2 ? 1 : 0) + 
+                                 (match.set2Team1 > match.set2Team2 ? 1 : 0) + 
+                                 ((match.set3Team1 || 0) > (match.set3Team2 || 0) ? 1 : 0);
+                  const t2Sets = (match.set1Team2 > match.set1Team1 ? 1 : 0) + 
+                                 (match.set2Team2 > match.set2Team1 ? 1 : 0) + 
+                                 ((match.set3Team2 || 0) > (match.set3Team1 || 0) ? 1 : 0);
 
                   return (
                     <tr key={match.id} className={!isComplete ? 'bg-teal-50/20' : 'opacity-60'}>
                       <td className="px-4 py-4 text-center font-black text-slate-400 text-xs">
-                        {match.match_order || idx + 1}
+                        {match.matchOrder || idx + 1}
                       </td>
                       <td className="px-2 py-4">
                         <div className="flex flex-col gap-0.5">
@@ -145,9 +143,9 @@ const PoolScreen = () => {
                       <td className="hidden sm:table-cell px-2 py-4 text-center">
                         {isComplete && (
                           <div className="flex justify-center gap-2 text-[10px] font-bold text-slate-400">
-                            <span>{match.set1_team1}-{match.set1_team2}</span>
-                            <span>{match.set2_team1}-{match.set2_team2}</span>
-                            {match.set3_team1 > 0 && <span>{match.set3_team1}-{match.set3_team2}</span>}
+                            <span>{match.set1Team1}-{match.set1Team2}</span>
+                            <span>{match.set2Team1}-{match.set2Team2}</span>
+                            {match.set3Team1 > 0 && <span>{match.set3Team1}-{match.set3Team2}</span>}
                           </div>
                         )}
                       </td>

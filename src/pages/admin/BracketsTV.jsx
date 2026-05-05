@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { ageGroups, brackets, teams, matches } from '../../lib/db/schema';
+import { eq, asc, inArray, and } from 'drizzle-orm';
 
 const BracketsTV = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
-  const [teams, setTeams] = useState({});
+  const [teamNames, setTeamNames] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,68 +18,70 @@ const BracketsTV = () => {
     }
 
     async function fetchAllBracketsData() {
-      const tId = localStorage.getItem('tournamentId');
-      if (!tId) {
+      try {
+        const tId = localStorage.getItem('tournamentId');
+        if (!tId) {
+          setLoading(false);
+          return;
+        }
+
+        const ags = await db.query.ageGroups.findMany({
+          where: eq(ageGroups.tournamentId, tId),
+          orderBy: [asc(ageGroups.displayOrder)]
+        });
+
+        if (!ags || ags.length === 0) {
+          setLoading(false);
+          return;
+        }
+
+        const ageGroupIds = ags.map(ag => ag.id);
+
+        const [allBrackets, allTeamsData, allMatches] = await Promise.all([
+          db.query.brackets.findMany({
+            where: inArray(brackets.ageGroupId, ageGroupIds)
+          }),
+          db.query.teams.findMany({
+            where: inArray(teams.ageGroupId, ageGroupIds)
+          }),
+          db.query.matches.findMany({
+            where: and(
+              inArray(matches.ageGroupId, ageGroupIds),
+              eq(matches.matchType, 'bracket')
+            ),
+            orderBy: [asc(matches.bracketRound)]
+          })
+        ]);
+
+        const teamMap = allTeamsData?.reduce((acc, t) => {
+          acc[t.id] = t.name;
+          return acc;
+        }, {}) || {};
+        setTeamNames(teamMap);
+
+        const organizedData = ags.map(ag => {
+          const agBrackets = allBrackets?.filter(b => b.ageGroupId === ag.id) || [];
+          return {
+            ...ag,
+            brackets: agBrackets.map(b => ({
+              ...b,
+              matches: allMatches?.filter(m => m.bracketId === b.id) || []
+            }))
+          };
+        });
+
+        setData(organizedData);
+      } catch (error) {
+        console.error('Error fetching TV brackets data:', error);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const { data: ageGroups } = await supabase
-        .from('age_groups')
-        .select('*')
-        .eq('tournament_id', tId)
-        .order('display_order');
-
-      if (!ageGroups) {
-        setLoading(false);
-        return;
-      }
-
-      const ageGroupIds = ageGroups.map(ag => ag.id);
-
-      const [
-        { data: allBrackets },
-        { data: allTeamsData },
-        { data: allMatches }
-      ] = await Promise.all([
-        supabase.from('brackets').select('*').in('age_group_id', ageGroupIds),
-        supabase.from('teams').select('*').in('age_group_id', ageGroupIds),
-        supabase.from('matches').select('*').in('age_group_id', ageGroupIds).eq('match_type', 'bracket').order('bracket_round', { ascending: true })
-      ]);
-
-      const teamMap = allTeamsData?.reduce((acc, t) => {
-        acc[t.id] = t.name;
-        return acc;
-      }, {}) || {};
-      setTeams(teamMap);
-
-      const organizedData = ageGroups.map(ag => {
-        const agBrackets = allBrackets?.filter(b => b.age_group_id === ag.id) || [];
-        return {
-          ...ag,
-          brackets: agBrackets.map(b => ({
-            ...b,
-            matches: allMatches?.filter(m => m.bracket_id === b.id) || []
-          }))
-        };
-      });
-
-      setData(organizedData);
-      setLoading(false);
     }
 
     fetchAllBracketsData();
+    const interval = setInterval(fetchAllBracketsData, 15000); // Poll every 15 seconds
 
-    const subscription = supabase
-      .channel('brackets-tv-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, 
-        () => fetchAllBracketsData()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
+    return () => clearInterval(interval);
   }, [navigate]);
 
   if (loading) return <div className="bg-brand-black min-h-screen text-white flex items-center justify-center p-8">Loading TV View...</div>;
@@ -108,7 +112,7 @@ const BracketsTV = () => {
             <h2 className="text-xl font-black uppercase italic tracking-tighter text-white border-l-4 border-brand-teal pl-3">{ag.name}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {ag.brackets.map(bracket => {
-                const maxRound = Math.max(...bracket.matches.map(m => m.bracket_round), 0);
+                const maxRound = Math.max(...bracket.matches.map(m => m.bracketRound), 0);
                 const rounds = Array.from({ length: maxRound }, (_, i) => i + 1);
                 
                 return (
@@ -120,7 +124,7 @@ const BracketsTV = () => {
 
                     <div className={`grid gap-2 grid-cols-${rounds.length || 1}`}>
                       {rounds.map(roundNum => {
-                        const roundMatches = bracket.matches.filter(m => m.bracket_round === roundNum);
+                        const roundMatches = bracket.matches.filter(m => m.bracketRound === roundNum);
                         if (roundMatches.length === 0) return null;
 
                         return (
@@ -129,8 +133,8 @@ const BracketsTV = () => {
                               {getRoundTitle(roundNum, maxRound)}
                             </div>
                             {roundMatches.map(match => {
-                              const t1Name = match.team1_id ? teams[match.team1_id] : (match.bracket_round === 1 ? 'BYE' : 'TBD');
-                              const t2Name = match.team2_id ? teams[match.team2_id] : (match.bracket_round === 1 ? 'BYE' : 'TBD');
+                              const t1Name = match.team1Id ? teamNames[match.team1Id] : (match.bracketRound === 1 ? 'BYE' : 'TBD');
+                              const t2Name = match.team2Id ? teamNames[match.team2Id] : (match.bracketRound === 1 ? 'BYE' : 'TBD');
 
                               return (
                                 <div key={match.id} className="bg-white/5 p-2 rounded-lg border border-white/5 flex flex-col gap-1">
@@ -139,11 +143,11 @@ const BracketsTV = () => {
                                       Ct {match.court}
                                     </div>
                                   )}
-                                  <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winner_id && match.winner_id === match.team1_id ? 'text-brand-teal' : 'text-white/40'}`}>
+                                  <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winnerId && match.winnerId === match.team1Id ? 'text-brand-teal' : 'text-white/40'}`}>
                                     <span className="truncate">{t1Name}</span>
                                     {match.status === 'complete' && <span>W</span>}
                                   </div>
-                                  <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winner_id && match.winner_id === match.team2_id ? 'text-brand-teal' : 'text-white/40'}`}>
+                                  <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winnerId && match.winnerId === match.team2Id ? 'text-brand-teal' : 'text-white/40'}`}>
                                     <span className="truncate">{t2Name}</span>
                                     {match.status === 'complete' && <span>W</span>}
                                   </div>

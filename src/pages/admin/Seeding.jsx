@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { ageGroups, teams, matches, brackets, pools, poolTeams } from '../../lib/db/schema';
+import { eq, asc, and, gt } from 'drizzle-orm';
 import { calculateStandings } from '../../lib/scoring';
 import { generateBracketMatches, generatePoolMatches, BRACKET_SIZES } from '../../lib/bracketGenerator';
 import Layout from '../../components/Layout';
@@ -15,7 +17,7 @@ const FORMATS = [
 
 const Seeding = () => {
   const navigate = useNavigate();
-  const [ageGroups, setAgeGroups] = useState([]);
+  const [ageGroupsList, setAgeGroupsList] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [rankedTeams, setRankedTeams] = useState([]);
   const [selectedFormat, setSelectedFormat] = useState(FORMATS[0]);
@@ -35,21 +37,39 @@ const Seeding = () => {
   }, [selectedGroupId]);
 
   async function fetchAgeGroups() {
-    const tId = localStorage.getItem('tournamentId');
-    const { data } = await supabase.from('age_groups').select('*').eq('tournament_id', tId).order('display_order');
-    if (data) {
-      setAgeGroups(data);
-      if (data.length > 0) setSelectedGroupId(data[0].id);
+    try {
+      const tId = localStorage.getItem('tournamentId');
+      const data = await db.query.ageGroups.findMany({
+        where: eq(ageGroups.tournamentId, tId),
+        orderBy: [asc(ageGroups.displayOrder)]
+      });
+      if (data) {
+        setAgeGroupsList(data);
+        if (data.length > 0) setSelectedGroupId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching age groups:', error);
     }
   }
 
   async function fetchRankings() {
-    const { data: teams } = await supabase.from('teams').select('*').eq('age_group_id', selectedGroupId);
-    const { data: matches } = await supabase.from('matches').select('*').eq('age_group_id', selectedGroupId).eq('match_type', 'pool');
-    
-    if (teams && matches) {
-      const standings = calculateStandings(teams, matches);
-      setRankedTeams(standings);
+    try {
+      const teamsData = await db.query.teams.findMany({
+        where: eq(teams.ageGroupId, selectedGroupId)
+      });
+      const matchesData = await db.query.matches.findMany({
+        where: and(
+          eq(matches.ageGroupId, selectedGroupId),
+          eq(matches.matchType, 'pool')
+        )
+      });
+      
+      if (teamsData && matchesData) {
+        const standings = calculateStandings(teamsData, matchesData);
+        setRankedTeams(standings);
+      }
+    } catch (error) {
+      console.error('Error fetching rankings:', error);
     }
   }
 
@@ -80,19 +100,26 @@ const Seeding = () => {
           : selectedFormat.brackets;
 
         // 1. Ensure brackets exist
-        await supabase.from('matches').delete().eq('age_group_id', selectedGroupId).eq('match_type', 'bracket');
+        await db.delete(matches).where(and(
+          eq(matches.ageGroupId, selectedGroupId),
+          eq(matches.matchType, 'bracket')
+        ));
         
         for (const bInfo of bracketsToCreate) {
-          let { data: bracket } = await supabase.from('brackets')
-            .select('*').eq('age_group_id', selectedGroupId).eq('name', bInfo.name).single();
+          let bracket = await db.query.brackets.findFirst({
+            where: and(
+              eq(brackets.ageGroupId, selectedGroupId),
+              eq(brackets.name, bInfo.name)
+            )
+          });
           
           if (!bracket) {
-            const { data: newB } = await supabase.from('brackets').insert([{
-              age_group_id: selectedGroupId, name: bInfo.name, size: bInfo.size, round: 2
-            }]).select().single();
-            bracket = newB;
+            const result = await db.insert(brackets).values({
+              ageGroupId: selectedGroupId, name: bInfo.name, size: bInfo.size, round: 2
+            }).returning();
+            bracket = result[0];
           } else {
-            await supabase.from('brackets').update({ size: bInfo.size }).eq('id', bracket.id);
+            await db.update(brackets).set({ size: bInfo.size }).where(eq(brackets.id, bracket.id));
           }
 
           const matchData = generateBracketMatches(selectedGroupId, bracket.id, bInfo.size, seeding[bInfo.name] || {});
@@ -102,29 +129,34 @@ const Seeding = () => {
           for (const m of matchData) {
             const { _meta, ...cleanMatch } = m;
             if (_meta) {
-              if (_meta.source1 !== null) cleanMatch.source_match1_id = insertedMatches[_meta.source1].id;
-              if (_meta.source2 !== null) cleanMatch.source_match2_id = insertedMatches[_meta.source2].id;
+              if (_meta.source1 !== null) cleanMatch.sourceMatch1Id = insertedMatches[_meta.source1].id;
+              if (_meta.source2 !== null) cleanMatch.sourceMatch2Id = insertedMatches[_meta.source2].id;
             }
-            const { data: newMatch } = await supabase.from('matches').insert([cleanMatch]).select().single();
-            insertedMatches.push(newMatch);
+            const result = await db.insert(matches).values(cleanMatch).returning();
+            insertedMatches.push(result[0]);
           }
         }
       } else if (selectedFormat.type === 'pool') {
         // Handle 2nd round pool play
-        await supabase.from('matches').delete().eq('age_group_id', selectedGroupId).eq('match_type', 'pool').gt('match_order', 100); // Rough way to clear R2
+        await db.delete(matches).where(and(
+          eq(matches.ageGroupId, selectedGroupId),
+          eq(matches.matchType, 'pool'),
+          gt(matches.matchOrder, 100)
+        ));
         
         for (const pInfo of selectedFormat.pools) {
-          const { data: pool } = await supabase.from('pools').insert([{
-            age_group_id: selectedGroupId, name: pInfo.name + ' Pool', court: 'TBD', round: 2
-          }]).select().single();
+          const result = await db.insert(pools).values({
+            ageGroupId: selectedGroupId, name: pInfo.name + ' Pool', court: 'TBD', round: 2
+          }).returning();
+          const pool = result[0];
 
-          const teams = Object.values(seeding[pInfo.name] || {});
-          for (const team of teams) {
-            await supabase.from('pool_teams').insert([{ pool_id: pool.id, team_id: team.id }]);
+          const teamsInSeeding = Object.values(seeding[pInfo.name] || {});
+          for (const team of teamsInSeeding) {
+            await db.insert(poolTeams).values({ poolId: pool.id, teamId: team.id });
           }
 
-          const matches = generatePoolMatches(selectedGroupId, pool.id, teams, 101); // Match order starts at 101 for R2
-          await supabase.from('matches').insert(matches);
+          const poolMatches = generatePoolMatches(selectedGroupId, pool.id, teamsInSeeding, 101); // Match order starts at 101 for R2
+          await db.insert(matches).values(poolMatches);
         }
       }
 
@@ -149,7 +181,7 @@ const Seeding = () => {
             <div className="flex flex-col gap-1">
               <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Age Group</label>
               <select value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)} className="p-3 border rounded-xl text-xs font-bold bg-white outline-none">
-                {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                {ageGroupsList.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1">

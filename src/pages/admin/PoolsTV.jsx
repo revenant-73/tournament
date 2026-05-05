@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { ageGroups, pools, teams, matches, poolTeams } from '../../lib/db/schema';
+import { eq, asc, inArray } from 'drizzle-orm';
 import { calculateStandings } from '../../lib/scoring';
 
 const PoolsTV = () => {
@@ -16,78 +18,76 @@ const PoolsTV = () => {
     }
 
     async function fetchAllPoolsData() {
-      const tId = localStorage.getItem('tournamentId');
-      if (!tId) {
+      try {
+        const tId = localStorage.getItem('tournamentId');
+        if (!tId) {
+          setLoading(false);
+          return;
+        }
+
+        // 1. Fetch all age groups
+        const ags = await db.query.ageGroups.findMany({
+          where: eq(ageGroups.tournamentId, tId),
+          orderBy: [asc(ageGroups.displayOrder)]
+        });
+
+        if (!ags || ags.length === 0) {
+          setLoading(false);
+          return;
+        }
+
+        // 2. Fetch all pools, teams, and matches for these age groups
+        const ageGroupIds = ags.map(ag => ag.id);
+
+        const [allPools, allTeams, allMatches, allPoolTeams] = await Promise.all([
+          db.query.pools.findMany({
+            where: inArray(pools.ageGroupId, ageGroupIds),
+            orderBy: [asc(pools.displayOrder)]
+          }),
+          db.query.teams.findMany({
+            where: inArray(teams.ageGroupId, ageGroupIds)
+          }),
+          db.query.matches.findMany({
+            where: inArray(matches.ageGroupId, ageGroupIds),
+            orderBy: [asc(matches.matchOrder)]
+          }),
+          db.query.poolTeams.findMany()
+        ]);
+
+        // 3. Organize data
+        const organizedData = ags.map(ag => {
+          const agPools = allPools?.filter(p => p.ageGroupId === ag.id) || [];
+          return {
+            ...ag,
+            pools: agPools.map(p => {
+              const pTeams = allPoolTeams
+                ?.filter(pt => pt.poolId === p.id)
+                .map(pt => allTeams?.find(t => t.id === pt.teamId))
+                .filter(Boolean) || [];
+              const pMatches = allMatches?.filter(m => m.poolId === p.id) || [];
+              const standings = calculateStandings(pTeams, pMatches);
+              return { ...p, teams: pTeams, matches: pMatches, standings };
+            })
+          };
+        });
+
+        setData(organizedData);
+      } catch (error) {
+        console.error('Error fetching TV pools data:', error);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      // 1. Fetch all age groups
-      const { data: ageGroups } = await supabase
-        .from('age_groups')
-        .select('*')
-        .eq('tournament_id', tId)
-        .order('display_order');
-
-      if (!ageGroups) {
-        setLoading(false);
-        return;
-      }
-
-      // 2. Fetch all pools, teams, and matches for these age groups
-      const ageGroupIds = ageGroups.map(ag => ag.id);
-
-      const [
-        { data: allPools },
-        { data: allTeams },
-        { data: allMatches },
-        { data: allPoolTeams }
-      ] = await Promise.all([
-        supabase.from('pools').select('*').in('age_group_id', ageGroupIds).order('display_order'),
-        supabase.from('teams').select('*').in('age_group_id', ageGroupIds),
-        supabase.from('matches').select('*').in('age_group_id', ageGroupIds).order('match_order'),
-        supabase.from('pool_teams').select('pool_id, team_id')
-      ]);
-
-      // 3. Organize data
-      const organizedData = ageGroups.map(ag => {
-        const agPools = allPools?.filter(p => p.age_group_id === ag.id) || [];
-        return {
-          ...ag,
-          pools: agPools.map(p => {
-            const pTeams = allPoolTeams
-              ?.filter(pt => pt.pool_id === p.id)
-              .map(pt => allTeams?.find(t => t.id === pt.team_id))
-              .filter(Boolean) || [];
-            const pMatches = allMatches?.filter(m => m.pool_id === p.id) || [];
-            const standings = calculateStandings(pTeams, pMatches);
-            return { ...p, teams: pTeams, matches: pMatches, standings };
-          })
-        };
-      });
-
-      setData(organizedData);
-      setLoading(false);
     }
 
     fetchAllPoolsData();
+    const interval = setInterval(fetchAllPoolsData, 15000); // Poll every 15 seconds
 
-    // Subscribe to all matches for realtime
-    const subscription = supabase
-      .channel('pools-tv-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, 
-        () => fetchAllPoolsData()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
+    return () => clearInterval(interval);
   }, [navigate]);
 
   if (loading) return <div className="bg-brand-black min-h-screen text-white flex items-center justify-center p-8">Loading TV View...</div>;
 
-  const allPools = data.flatMap(ag => ag.pools.map(pool => ({ ...pool, ageGroupName: ag.name })));
+  const allPoolsDisplay = data.flatMap(ag => ag.pools.map(pool => ({ ...pool, ageGroupName: ag.name })));
 
   return (
     <div className="bg-brand-black min-h-screen text-white p-6 font-sans">
@@ -104,7 +104,7 @@ const PoolsTV = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-8">
-        {allPools.map(pool => (
+        {allPoolsDisplay.map(pool => (
           <div key={pool.id} className="bg-white/5 rounded-[2rem] p-8 border border-white/10 flex flex-col gap-6 shadow-2xl backdrop-blur-sm">
             <div className="flex justify-between items-center border-b border-white/10 pb-4">
               <div className="flex flex-col">
@@ -155,18 +155,18 @@ const PoolsTV = () => {
                   <div className="text-[10px] font-black text-white/20 uppercase text-center py-2 italic tracking-widest">No scores entered yet</div>
                 ) : (
                   pool.matches.map(m => {
-                    const t1 = pool.teams.find(t => t.id === m.team1_id);
-                    const t2 = pool.teams.find(t => t.id === m.team2_id);
+                    const t1 = pool.teams.find(t => t.id === m.team1Id);
+                    const t2 = pool.teams.find(t => t.id === m.team2Id);
                     
                     if (m.status !== 'complete') return null;
 
                     // Calculate match score (sets won)
                     let t1Sets = 0;
                     let t2Sets = 0;
-                    if (m.set1_team1 > m.set1_team2) t1Sets++; else if (m.set1_team2 > m.set1_team1) t2Sets++;
-                    if (m.set2_team1 > m.set2_team2) t1Sets++; else if (m.set2_team2 > m.set2_team1) t2Sets++;
-                    if (m.set3_team1 > 0 || m.set3_team2 > 0) {
-                      if (m.set3_team1 > m.set3_team2) t1Sets++; else if (m.set3_team2 > m.set3_team1) t2Sets++;
+                    if (m.set1Team1 > m.set1Team2) t1Sets++; else if (m.set1Team2 > m.set1Team1) t2Sets++;
+                    if (m.set2Team1 > m.set2Team2) t1Sets++; else if (m.set2Team2 > m.set2Team1) t2Sets++;
+                    if (m.set3Team1 > 0 || m.set3Team2 > 0) {
+                      if (m.set3Team1 > m.set3Team2) t1Sets++; else if (m.set3Team2 > m.set3Team1) t2Sets++;
                     }
 
                     return (

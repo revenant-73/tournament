@@ -68,15 +68,15 @@ export const calculateStandings = (teams, matches) => {
   }, {});
 
   matches.filter(m => m.status === 'complete').forEach(match => {
-    const t1 = teamStatsMap[match.team1_id];
-    const t2 = teamStatsMap[match.team2_id];
+    const t1 = teamStatsMap[match.team1Id];
+    const t2 = teamStatsMap[match.team2Id];
 
     if (!t1 || !t2) return;
 
     const matchStats = calculateMatchStats([
-      { team1: match.set1_team1, team2: match.set1_team2 },
-      { team1: match.set2_team1, team2: match.set2_team2 },
-      { team1: match.set3_team1, team2: match.set3_team2 }
+      { team1: match.set1Team1, team2: match.set1Team2 },
+      { team1: match.set2Team1, team2: match.set2Team2 },
+      { team1: match.set3Team1, team2: match.set3Team2 }
     ]);
 
     t1.setsWon += matchStats.team1SetsWon;

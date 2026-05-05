@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { tournaments } from '../../lib/db/schema';
+import { eq } from 'drizzle-orm';
 import Layout from '../../components/Layout';
 
 const Login = () => {
@@ -16,20 +18,22 @@ const Login = () => {
 
     try {
       // 1. Fetch active tournament to get admin password
-      const { data, error: fetchError } = await supabase
-        .from('tournaments')
-        .select('id, admin_password')
-        .eq('is_active', true)
-        .single();
+      const data = await db.query.tournaments.findFirst({
+        where: eq(tournaments.isActive, true),
+        columns: {
+          id: true,
+          adminPassword: true
+        }
+      });
 
-      if (fetchError || !data) {
+      if (!data) {
         setError('No active tournament found to authenticate.');
         setLoading(false);
         return;
       }
 
       // 2. Simple password verification
-      if (password === data.admin_password) {
+      if (password === data.adminPassword) {
         localStorage.setItem('adminToken', 'brand-admin-authenticated');
         localStorage.setItem('tournamentId', data.id);
         navigate('/admin/dashboard');

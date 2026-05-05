@@ -1,43 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { tournaments, ageGroups, pools, brackets } from '../../lib/db/schema';
+import { eq, asc } from 'drizzle-orm';
 import { Link } from 'react-router-dom';
 import Layout from '../../components/Layout';
 
 const Home = () => {
   const [tournament, setTournament] = useState(null);
-  const [ageGroups, setAgeGroups] = useState([]);
-  const [pools, setPools] = useState([]);
-  const [brackets, setBrackets] = useState([]);
+  const [ageGroupsList, setAgeGroupsList] = useState([]);
+  const [poolsList, setPoolsList] = useState([]);
+  const [bracketsList, setBracketsList] = useState([]);
   const [selectedAgeGroupId, setSelectedAgeGroupId] = useState(
     localStorage.getItem('selectedAgeGroupId') || ''
   );
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
-      const { data: tournamentData, error: tError } = await supabase
-        .from('tournaments')
-        .select('*')
-        .eq('is_active', true)
-        .single();
-
-      if (tError) {
-        setLoading(false);
-        return;
-      }
-      setTournament(tournamentData);
-
-      const { data: groupsData } = await supabase
-        .from('age_groups')
-        .select('*')
-        .eq('tournament_id', tournamentData.id)
-        .order('display_order');
-
-      if (groupsData) {
-        setAgeGroups(groupsData);
-        if (groupsData.length === 1 && !selectedAgeGroupId) {
-          handleSelectAgeGroup(groupsData[0].id);
+      console.log("Fetching tournament data...");
+      try {
+        if (!db) {
+          throw new Error("Database client not initialized");
         }
+        const tournamentData = await db.query.tournaments.findFirst({
+          where: eq(tournaments.isActive, true)
+        });
+
+        if (!tournamentData) {
+          console.log("No active tournament found");
+          setLoading(false);
+          return;
+        }
+        setTournament(tournamentData);
+
+        const groupsData = await db.query.ageGroups.findMany({
+          where: eq(ageGroups.tournamentId, tournamentData.id),
+          orderBy: [asc(ageGroups.displayOrder)]
+        });
+
+        if (groupsData) {
+          setAgeGroupsList(groupsData);
+          if (groupsData.length === 1 && !selectedAgeGroupId) {
+            handleSelectAgeGroup(groupsData[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err.message);
       }
       setLoading(false);
     }
@@ -51,22 +61,22 @@ const Home = () => {
   }, [selectedAgeGroupId]);
 
   async function fetchNextRoundData() {
-    const { data: pData } = await supabase
-      .from('pools')
-      .select('*')
-      .eq('age_group_id', selectedAgeGroupId)
-      .order('round')
-      .order('display_order');
-    
-    const { data: bData } = await supabase
-      .from('brackets')
-      .select('*')
-      .eq('age_group_id', selectedAgeGroupId)
-      .order('round')
-      .order('display_order');
+    try {
+      const pData = await db.query.pools.findMany({
+        where: eq(pools.ageGroupId, selectedAgeGroupId),
+        orderBy: [asc(pools.round), asc(pools.displayOrder)]
+      });
+      
+      const bData = await db.query.brackets.findMany({
+        where: eq(brackets.ageGroupId, selectedAgeGroupId),
+        orderBy: [asc(brackets.round), asc(brackets.displayOrder)]
+      });
 
-    setPools(pData || []);
-    setBrackets(bData || []);
+      setPoolsList(pData || []);
+      setBracketsList(bData || []);
+    } catch (err) {
+      console.error('Error fetching round data:', err);
+    }
   }
 
   const handleSelectAgeGroup = (id) => {
@@ -74,10 +84,19 @@ const Home = () => {
     localStorage.setItem('selectedAgeGroupId', id);
   };
 
-  if (loading) return <div className="p-8 text-center">Loading Tournament...</div>;
+  if (loading) return <div className="p-8 text-center flex flex-col items-center gap-4">
+    <div className="w-8 h-8 border-4 border-brand-teal border-t-transparent rounded-full animate-spin"></div>
+    <span className="font-bold uppercase tracking-widest text-slate-400">Loading Tournament...</span>
+  </div>;
+
+  if (error) return <div className="p-8 text-center text-red-500 font-bold uppercase italic flex flex-col gap-2">
+    <span>Error connecting to database</span>
+    <span className="text-[10px] opacity-60 font-mono">{error}</span>
+  </div>;
+
   if (!tournament) return <div className="p-8 text-center text-red-500 font-bold uppercase italic">No Active Tournament Found</div>;
 
-  if (!selectedAgeGroupId && ageGroups.length > 1) {
+  if (!selectedAgeGroupId && ageGroupsList.length > 1) {
     return (
       <div className="min-h-screen bg-brand-black flex flex-col items-center justify-center p-8">
         <div className="mb-16 text-center">
@@ -88,7 +107,7 @@ const Home = () => {
         </div>
         <div className="w-full max-w-xs flex flex-col gap-4">
           <p className="text-white/30 text-[10px] text-center font-bold uppercase tracking-widest mb-2">Select Age Group</p>
-          {ageGroups.map(group => (
+          {ageGroupsList.map(group => (
             <button key={group.id} onClick={() => handleSelectAgeGroup(group.id)} className="bg-white/5 hover:bg-white/10 border border-white/10 text-white p-5 rounded-2xl text-lg font-bold transition-all backdrop-blur-md active:scale-95">
               {group.name}
             </button>
@@ -98,8 +117,8 @@ const Home = () => {
     );
   }
 
-  const currentAgeGroup = ageGroups.find(g => g.id === selectedAgeGroupId);
-  const rounds = Array.from(new Set([...pools.map(p => p.round), ...brackets.map(b => b.round)])).sort();
+  const currentAgeGroup = ageGroupsList.find(g => g.id === selectedAgeGroupId);
+  const rounds = Array.from(new Set([...poolsList.map(p => p.round), ...bracketsList.map(b => b.round)])).sort();
 
   return (
     <Layout title={currentAgeGroup?.name || 'Tournament'}>
@@ -111,7 +130,7 @@ const Home = () => {
             </h3>
             
             <div className="grid gap-3">
-              {pools.filter(p => p.round === roundNum).map(pool => (
+              {poolsList.filter(p => p.round === roundNum).map(pool => (
                 <Link key={pool.id} to={`/pool/${pool.id}`} className="bg-white border border-slate-100 p-5 rounded-2xl flex justify-between items-center group active:scale-[0.98] transition-all shadow-sm hover:shadow-md">
                   <div className="flex flex-col">
                     <span className="font-black text-slate-800 tracking-tight uppercase italic">{pool.name}</span>
@@ -121,7 +140,7 @@ const Home = () => {
                 </Link>
               ))}
 
-              {brackets.filter(b => b.round === roundNum).map(bracket => (
+              {bracketsList.filter(b => b.round === roundNum).map(bracket => (
                 <Link key={bracket.id} to={`/bracket/${bracket.id}`} className="bg-brand-teal text-white p-5 rounded-2xl flex justify-between items-center group active:scale-[0.98] transition-all shadow-lg shadow-teal-500/20">
                   <div className="flex flex-col">
                     <span className="font-black tracking-tight uppercase italic">{bracket.name} Bracket</span>
@@ -146,7 +165,7 @@ const Home = () => {
           </Link>
         </div>
 
-        {ageGroups.length > 1 && (
+        {ageGroupsList.length > 1 && (
           <button onClick={() => setSelectedAgeGroupId('')} className="text-[10px] text-center text-slate-400 hover:text-brand-teal mt-4 font-bold uppercase tracking-widest transition-colors">
             ← Change Age Group
           </button>

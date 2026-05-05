@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { db } from '../../lib/db';
+import { tournaments, ageGroups, pools, brackets, teams, matches } from '../../lib/db/schema';
+import { eq, asc } from 'drizzle-orm';
 import { calculateStandings } from '../../lib/scoring';
 import Layout from '../../components/Layout';
 
 const Results = () => {
   const [tournament, setTournament] = useState(null);
-  const [ageGroups, setAgeGroups] = useState([]);
+  const [ageGroupsList, setAgeGroupsList] = useState([]);
   const [selectedAgeGroupId, setSelectedAgeGroupId] = useState(
     localStorage.getItem('selectedAgeGroupId') || ''
   );
@@ -19,24 +21,25 @@ const Results = () => {
 
   useEffect(() => {
     async function fetchTournament() {
-      const { data: tData } = await supabase
-        .from('tournaments')
-        .select('*')
-        .eq('is_active', true)
-        .single();
-      setTournament(tData);
+      try {
+        const tData = await db.query.tournaments.findFirst({
+          where: eq(tournaments.isActive, true)
+        });
+        setTournament(tData);
 
-      if (tData) {
-        const { data: gData } = await supabase
-          .from('age_groups')
-          .select('*')
-          .eq('tournament_id', tData.id)
-          .order('display_order');
-        setAgeGroups(gData || []);
-        
-        if (gData?.length > 0 && !selectedAgeGroupId) {
-          setSelectedAgeGroupId(gData[0].id);
+        if (tData) {
+          const gData = await db.query.ageGroups.findMany({
+            where: eq(ageGroups.tournamentId, tData.id),
+            orderBy: [asc(ageGroups.displayOrder)]
+          });
+          setAgeGroupsList(gData || []);
+          
+          if (gData?.length > 0 && !selectedAgeGroupId) {
+            setSelectedAgeGroupId(gData[0].id);
+          }
         }
+      } catch (error) {
+        console.error('Error fetching tournament:', error);
       }
     }
     fetchTournament();
@@ -51,38 +54,38 @@ const Results = () => {
   async function fetchResults() {
     setLoading(true);
     
-    // 1. Fetch Pools
-    const { data: pools } = await supabase
-      .from('pools')
-      .select('*')
-      .eq('age_group_id', selectedAgeGroupId)
-      .order('display_order');
+    try {
+      // 1. Fetch Pools
+      const poolsData = await db.query.pools.findMany({
+        where: eq(pools.ageGroupId, selectedAgeGroupId),
+        orderBy: [asc(pools.displayOrder)]
+      });
 
-    // 2. Fetch Brackets
-    const { data: brackets } = await supabase
-      .from('brackets')
-      .select('*')
-      .eq('age_group_id', selectedAgeGroupId)
-      .order('display_order');
+      // 2. Fetch Brackets
+      const bracketsData = await db.query.brackets.findMany({
+        where: eq(brackets.ageGroupId, selectedAgeGroupId),
+        orderBy: [asc(brackets.displayOrder)]
+      });
 
-    // 3. Fetch Teams
-    const { data: teams } = await supabase
-      .from('teams')
-      .select('*')
-      .eq('age_group_id', selectedAgeGroupId);
+      // 3. Fetch Teams
+      const teamsData = await db.query.teams.findMany({
+        where: eq(teams.ageGroupId, selectedAgeGroupId)
+      });
 
-    // 4. Fetch Matches
-    const { data: matches } = await supabase
-      .from('matches')
-      .select('*')
-      .eq('age_group_id', selectedAgeGroupId);
+      // 4. Fetch Matches
+      const matchesData = await db.query.matches.findMany({
+        where: eq(matches.ageGroupId, selectedAgeGroupId)
+      });
 
-    setData({
-      pools: pools || [],
-      brackets: brackets || [],
-      teams: teams || [],
-      matches: matches || []
-    });
+      setData({
+        pools: poolsData || [],
+        brackets: bracketsData || [],
+        teams: teamsData || [],
+        matches: matchesData || []
+      });
+    } catch (error) {
+      console.error('Error fetching results:', error);
+    }
     setLoading(false);
   }
 
@@ -92,7 +95,7 @@ const Results = () => {
 
   if (loading && !tournament) return <Layout title="Results"><div className="p-8 text-center">Loading...</div></Layout>;
 
-  const currentAgeGroup = ageGroups.find(g => g.id === selectedAgeGroupId);
+  const currentAgeGroup = ageGroupsList.find(g => g.id === selectedAgeGroupId);
 
   return (
     <Layout title="Tournament Results">
@@ -107,7 +110,7 @@ const Results = () => {
               onChange={e => setSelectedAgeGroupId(e.target.value)}
               className="p-4 bg-white border border-slate-100 rounded-2xl outline-none font-bold text-slate-800 transition-all shadow-sm focus:ring-4 focus:ring-brand-teal/10"
             >
-              {ageGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              {ageGroupsList.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
 
@@ -142,11 +145,11 @@ const Results = () => {
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 px-2 print:text-brand-black print:text-xs print:mb-6">Pool Performance</h3>
             <div className="grid gap-8">
               {data.pools.map(pool => {
-                const poolMatches = data.matches.filter(m => m.pool_id === pool.id);
+                const poolMatches = data.matches.filter(m => m.poolId === pool.id);
                 const teamIdsInPool = new Set();
                 poolMatches.forEach(m => {
-                  if (m.team1_id) teamIdsInPool.add(m.team1_id);
-                  if (m.team2_id) teamIdsInPool.add(m.team2_id);
+                  if (m.team1Id) teamIdsInPool.add(m.team1Id);
+                  if (m.team2Id) teamIdsInPool.add(m.team2Id);
                 });
                 const teamsInPool = data.teams.filter(t => teamIdsInPool.has(t.id));
                 const standings = calculateStandings(teamsInPool, poolMatches);
@@ -189,13 +192,13 @@ const Results = () => {
             <div className="grid gap-6">
               {data.brackets.map(bracket => {
                 const finalMatch = data.matches.find(m => 
-                  m.bracket_id === bracket.id && 
-                  m.bracket_round === 3 && 
+                  m.bracketId === bracket.id && 
+                  m.bracketRound === 3 && 
                   m.status === 'complete'
                 );
                 
-                const winner = finalMatch ? data.teams.find(t => t.id === finalMatch.winner_id) : null;
-                const runnerUp = finalMatch ? data.teams.find(t => t.id === (finalMatch.winner_id === finalMatch.team1_id ? finalMatch.team2_id : finalMatch.team1_id)) : null;
+                const winner = finalMatch ? data.teams.find(t => t.id === finalMatch.winnerId) : null;
+                const runnerUp = finalMatch ? data.teams.find(t => t.id === (finalMatch.winnerId === finalMatch.team1Id ? finalMatch.team2Id : finalMatch.team1Id)) : null;
 
                 return (
                   <div key={bracket.id} className="bg-brand-black p-8 rounded-[2.5rem] shadow-xl border border-slate-100 print:shadow-none print:bg-slate-50 print:border-slate-200 group">
