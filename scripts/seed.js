@@ -14,7 +14,7 @@ async function seed() {
     console.log("Seeding initial tournament...");
     
     const tournament = await db.insert(schema.tournaments).values({
-      name: "TVVC Grass Doubles",
+      name: "May ShinDig",
       date: "2024-06-01",
       location: "Central Park",
       info: "Annual summer kick-off tournament.",
