@@ -377,7 +377,7 @@ const PoolsManager = ({ tournamentId }) => {
   const [matchesMap, setMatchesMap] = useState({}); // poolId -> array of matches
   const [newPool, setNewPool] = useState({ name: '', court: '' });
   const [selectedTeamId, setSelectedTeamId] = useState(null);
-  const [manualMatch, setManualMatch] = useState({ poolId: null, team1Id: '', team2Id: '', refTeamId: '', matchOrder: '', court: '' });
+  const [manualMatch, setManualMatch] = useState({ poolId: null, team1Id: '', team2Id: '', matchOrder: '', court: '' });
 
   useEffect(() => {
     fetchAgeGroups();
@@ -518,9 +518,9 @@ const PoolsManager = ({ tournamentId }) => {
     let matchesToCreate = [];
     if (teamsInPool.length === 3) {
       const schedule = [
-        { t1: 0, t2: 2, ref: 1 }, // 1v3 Ref 2
-        { t1: 1, t2: 2, ref: 0 }, // 2v3 Ref 1
-        { t1: 0, t2: 1, ref: 2 }  // 1v2 Ref 3
+        { t1: 0, t2: 2 }, // 1v3
+        { t1: 1, t2: 2 }, // 2v3
+        { t1: 0, t2: 1 }  // 1v2
       ];
       matchesToCreate = schedule.map((m, idx) => ({
         ageGroupId: selectedGroupId,
@@ -528,18 +528,17 @@ const PoolsManager = ({ tournamentId }) => {
         matchType: 'pool',
         team1Id: teamsInPool[m.t1].id,
         team2Id: teamsInPool[m.t2].id,
-        refTeamId: teamsInPool[m.ref].id,
         matchOrder: idx + 1,
         status: 'scheduled'
       }));
     } else if (teamsInPool.length === 4) {
       const schedule = [
-        { t1: 0, t2: 2, ref: 3 }, // 1v3 Ref 4
-        { t1: 1, t2: 3, ref: 2 }, // 2v4 Ref 3
-        { t1: 0, t2: 3, ref: 1 }, // 1v4 Ref 2
-        { t1: 1, t2: 2, ref: 3 }, // 2v3 Ref 4
-        { t1: 2, t2: 3, ref: 0 }, // 3v4 Ref 1
-        { t1: 0, t2: 1, ref: 2 }  // 1v2 Ref 3
+        { t1: 0, t2: 2 }, // 1v3
+        { t1: 1, t2: 3 }, // 2v4
+        { t1: 0, t2: 3 }, // 1v4
+        { t1: 1, t2: 2 }, // 2v3
+        { t1: 2, t2: 3 }, // 3v4
+        { t1: 0, t2: 1 }  // 1v2
       ];
       matchesToCreate = schedule.map((m, idx) => ({
         ageGroupId: selectedGroupId,
@@ -547,27 +546,26 @@ const PoolsManager = ({ tournamentId }) => {
         matchType: 'pool',
         team1Id: teamsInPool[m.t1].id,
         team2Id: teamsInPool[m.t2].id,
-        refTeamId: teamsInPool[m.ref].id,
         matchOrder: idx + 1,
         status: 'scheduled'
       }));
     } else if (teamsInPool.length === 5) {
       const schedule = [
         // Wave 1
-        { t1: 0, t2: 3, ref: 3, court: '1' }, // 1v4 Ref 4
-        { t1: 1, t2: 4, ref: 4, court: '2' }, // 2v5 Ref 5
+        { t1: 0, t2: 3, court: '1' }, // 1v4
+        { t1: 1, t2: 4, court: '2' }, // 2v5
         // Wave 2
-        { t1: 0, t2: 4, ref: 2, court: '1' }, // 1v5 Ref 3
-        { t1: 1, t2: 2, ref: 1, court: '2' }, // 2v3 Ref 2
+        { t1: 0, t2: 4, court: '1' }, // 1v5
+        { t1: 1, t2: 2, court: '2' }, // 2v3
         // Wave 3
-        { t1: 2, t2: 4, ref: 1, court: '1' }, // 3v5 Ref 2
-        { t1: 1, t2: 3, ref: 0, court: '2' }, // 2v4 Ref 1
+        { t1: 2, t2: 4, court: '1' }, // 3v5
+        { t1: 1, t2: 3, court: '2' }, // 2v4
         // Wave 4
-        { t1: 0, t2: 2, ref: 0, court: '1' }, // 1v3 Ref 1
-        { t1: 3, t2: 4, ref: 3, court: '2' }, // 4v5 Ref 4
+        { t1: 0, t2: 2, court: '1' }, // 1v3
+        { t1: 3, t2: 4, court: '2' }, // 4v5
         // Wave 5
-        { t1: 0, t2: 1, ref: 4, court: '1' }, // 1v2 Ref 5
-        { t1: 2, t2: 3, ref: 2, court: '2' }  // 3v4 Ref 3
+        { t1: 0, t2: 1, court: '1' }, // 1v2
+        { t1: 2, t2: 3, court: '2' }  // 3v4
       ];
       matchesToCreate = schedule.map((m, idx) => ({
         ageGroupId: selectedGroupId,
@@ -575,7 +573,6 @@ const PoolsManager = ({ tournamentId }) => {
         matchType: 'pool',
         team1Id: teamsInPool[m.t1].id,
         team2Id: teamsInPool[m.t2].id,
-        refTeamId: teamsInPool[m.ref].id,
         matchOrder: idx + 1,
         court: `C${m.court}`,
         status: 'scheduled'
@@ -610,7 +607,7 @@ const PoolsManager = ({ tournamentId }) => {
   };
 
   const handleAddManualMatch = async (poolId) => {
-    const { team1Id, team2Id, refTeamId, matchOrder, court } = manualMatch;
+    const { team1Id, team2Id, matchOrder, court } = manualMatch;
     if (!team1Id || !team2Id || !matchOrder) {
       alert('Team 1, Team 2 and Order are required');
       return;
@@ -622,12 +619,11 @@ const PoolsManager = ({ tournamentId }) => {
         matchType: 'pool',
         team1Id,
         team2Id,
-        refTeamId: refTeamId || null,
         matchOrder: parseInt(matchOrder),
         court: court || null,
         status: 'scheduled'
       });
-      setManualMatch({ poolId: null, team1Id: '', team2Id: '', refTeamId: '', matchOrder: '', court: '' });
+      setManualMatch({ poolId: null, team1Id: '', team2Id: '', matchOrder: '', court: '' });
       fetchMatches();
     } catch (error) {
       alert(error.message);
@@ -785,9 +781,6 @@ const PoolsManager = ({ tournamentId }) => {
                           <span className="text-slate-300 italic font-medium">vs</span>
                           <span className={match.winnerId === match.team2Id ? 'text-brand-teal' : ''}>{getTeamName(match.team2Id)}</span>
                         </div>
-                        {match.refTeamId && (
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter bg-white px-2 py-0.5 rounded-full border border-slate-100">Ref: {getTeamName(match.refTeamId)}</span>
-                        )}
                         {match.court && (
                           <span className="text-[10px] font-bold text-brand-teal uppercase tracking-tighter bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100">{match.court}</span>
                         )}
@@ -839,7 +832,7 @@ const PoolsManager = ({ tournamentId }) => {
                           className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-teal/20 outline-none transition-all cursor-pointer"
                         >
                           <option value="">Select Team</option>
-                          {poolTeamsMap[pool.id]?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                          {teamsList.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                       </div>
                       <div className="flex flex-col gap-1">
@@ -850,21 +843,9 @@ const PoolsManager = ({ tournamentId }) => {
                           className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-teal/20 outline-none transition-all cursor-pointer"
                         >
                           <option value="">Select Team</option>
-                          {poolTeamsMap[pool.id]?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                          {teamsList.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                       </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Ref Team (Optional)</label>
-                      <select 
-                        value={manualMatch.refTeamId}
-                        onChange={e => setManualMatch({...manualMatch, refTeamId: e.target.value})}
-                        className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-teal/20 outline-none transition-all cursor-pointer"
-                      >
-                        <option value="">Select Ref Team</option>
-                        {poolTeamsMap[pool.id]?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                      </select>
                     </div>
 
                     <button 
