@@ -374,8 +374,10 @@ const PoolsManager = ({ tournamentId }) => {
   const [poolsList, setPoolsList] = useState([]);
   const [teamsList, setTeamsList] = useState([]);
   const [poolTeamsMap, setPoolTeamsMap] = useState({}); // poolId -> array of team objects
+  const [matchesMap, setMatchesMap] = useState({}); // poolId -> array of matches
   const [newPool, setNewPool] = useState({ name: '', court: '' });
   const [selectedTeamId, setSelectedTeamId] = useState(null);
+  const [manualMatch, setManualMatch] = useState({ poolId: null, team1Id: '', team2Id: '', refTeamId: '', matchOrder: '', court: '' });
 
   useEffect(() => {
     fetchAgeGroups();
@@ -403,6 +405,23 @@ const PoolsManager = ({ tournamentId }) => {
     }
   }
 
+  async function fetchMatches() {
+    try {
+      const data = await db.query.matches.findMany({
+        where: and(eq(matches.ageGroupId, selectedGroupId), eq(matches.matchType, 'pool')),
+        orderBy: [asc(matches.matchOrder)]
+      });
+      const mMap = {};
+      data.forEach(m => {
+        if (!mMap[m.poolId]) mMap[m.poolId] = [];
+        mMap[m.poolId].push(m);
+      });
+      setMatchesMap(mMap);
+    } catch (error) {
+      console.error('Error fetching matches:', error);
+    }
+  }
+
   async function fetchPools() {
     try {
       const data = await db.query.pools.findMany({
@@ -423,6 +442,7 @@ const PoolsManager = ({ tournamentId }) => {
           ptData[p.id] = p.poolTeams.map(pt => pt.team);
         });
         setPoolTeamsMap(ptData);
+        fetchMatches();
       }
     } catch (error) {
       console.error('Error fetching pools:', error);
@@ -581,11 +601,52 @@ const PoolsManager = ({ tournamentId }) => {
       try {
         await db.delete(matches).where(eq(matches.poolId, poolId));
         await db.insert(matches).values(matchesToCreate);
+        fetchMatches();
         alert('Matches generated!');
       } catch (error) {
         alert(error.message);
       }
     }
+  };
+
+  const handleAddManualMatch = async (poolId) => {
+    const { team1Id, team2Id, refTeamId, matchOrder, court } = manualMatch;
+    if (!team1Id || !team2Id || !matchOrder) {
+      alert('Team 1, Team 2 and Order are required');
+      return;
+    }
+    try {
+      await db.insert(matches).values({
+        ageGroupId: selectedGroupId,
+        poolId: poolId,
+        matchType: 'pool',
+        team1Id,
+        team2Id,
+        refTeamId: refTeamId || null,
+        matchOrder: parseInt(matchOrder),
+        court: court || null,
+        status: 'scheduled'
+      });
+      setManualMatch({ poolId: null, team1Id: '', team2Id: '', refTeamId: '', matchOrder: '', court: '' });
+      fetchMatches();
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleDeleteMatch = async (id) => {
+    if (!confirm('Delete this match?')) return;
+    try {
+      await db.delete(matches).where(eq(matches.id, id));
+      fetchMatches();
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const getTeamName = (id) => {
+    const team = teamsList.find(t => t.id === id);
+    return team ? team.name : 'Unknown';
   };
 
   const unassignedTeams = teamsList.filter(t => 
@@ -702,11 +763,125 @@ const PoolsManager = ({ tournamentId }) => {
                 </div>
               )}
 
+              {/* Matches List */}
+              <div className="flex flex-col gap-4 border-t border-slate-50 pt-6">
+                <div className="flex justify-between items-center px-1">
+                  <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pool Matches</h5>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setManualMatch({...manualMatch, poolId: manualMatch.poolId === pool.id ? null : pool.id}); }}
+                    className="text-[10px] font-black text-brand-teal uppercase tracking-widest"
+                  >
+                    {manualMatch.poolId === pool.id ? 'Close Manual Add' : '+ Add Manual Match'}
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {(matchesMap[pool.id] || []).map(match => (
+                    <div key={match.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 group/match">
+                      <div className="flex items-center gap-4">
+                        <span className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-400">{match.matchOrder}</span>
+                        <div className="flex items-center gap-2 font-bold text-xs text-slate-700">
+                          <span className={match.winnerId === match.team1Id ? 'text-brand-teal' : ''}>{getTeamName(match.team1Id)}</span>
+                          <span className="text-slate-300 italic font-medium">vs</span>
+                          <span className={match.winnerId === match.team2Id ? 'text-brand-teal' : ''}>{getTeamName(match.team2Id)}</span>
+                        </div>
+                        {match.refTeamId && (
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter bg-white px-2 py-0.5 rounded-full border border-slate-100">Ref: {getTeamName(match.refTeamId)}</span>
+                        )}
+                        {match.court && (
+                          <span className="text-[10px] font-bold text-brand-teal uppercase tracking-tighter bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100">{match.court}</span>
+                        )}
+                      </div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteMatch(match.id); }}
+                        className="text-rose-400 hover:text-rose-600 opacity-0 group-hover/match:opacity-100 transition-opacity p-1"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {(!matchesMap[pool.id] || matchesMap[pool.id].length === 0) && (
+                    <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic text-center py-2">No matches scheduled</span>
+                  )}
+                </div>
+
+                {manualMatch.poolId === pool.id && (
+                  <div className="bg-white p-4 rounded-2xl border-2 border-brand-teal/20 flex flex-col gap-4 shadow-xl" onClick={e => e.stopPropagation()}>
+                    <div className="grid grid-cols-4 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Order</label>
+                        <input 
+                          type="number" 
+                          placeholder="#" 
+                          value={manualMatch.matchOrder}
+                          onChange={e => setManualMatch({...manualMatch, matchOrder: e.target.value})}
+                          className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-teal/20 outline-none transition-all"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1 col-span-3">
+                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Court (Optional)</label>
+                        <input 
+                          type="text" 
+                          placeholder={pool.court}
+                          value={manualMatch.court}
+                          onChange={e => setManualMatch({...manualMatch, court: e.target.value})}
+                          className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-teal/20 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Team 1</label>
+                        <select 
+                          value={manualMatch.team1Id}
+                          onChange={e => setManualMatch({...manualMatch, team1Id: e.target.value})}
+                          className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-teal/20 outline-none transition-all cursor-pointer"
+                        >
+                          <option value="">Select Team</option>
+                          {poolTeamsMap[pool.id]?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Team 2</label>
+                        <select 
+                          value={manualMatch.team2Id}
+                          onChange={e => setManualMatch({...manualMatch, team2Id: e.target.value})}
+                          className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-teal/20 outline-none transition-all cursor-pointer"
+                        >
+                          <option value="">Select Team</option>
+                          {poolTeamsMap[pool.id]?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Ref Team (Optional)</label>
+                      <select 
+                        value={manualMatch.refTeamId}
+                        onChange={e => setManualMatch({...manualMatch, refTeamId: e.target.value})}
+                        className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-teal/20 outline-none transition-all cursor-pointer"
+                      >
+                        <option value="">Select Ref Team</option>
+                        {poolTeamsMap[pool.id]?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      </select>
+                    </div>
+
+                    <button 
+                      onClick={() => handleAddManualMatch(pool.id)}
+                      className="btn btn-primary py-3 text-[10px] font-black uppercase tracking-widest"
+                    >
+                      Save Match to Pool
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <button 
                 onClick={(e) => { e.stopPropagation(); generateMatches(pool.id); }}
                 className="mt-2 text-[10px] font-black text-brand-coral uppercase tracking-[0.2em] border-2 border-brand-coral/10 rounded-2xl py-4 hover:bg-brand-coral hover:text-white hover:border-brand-coral transition-all"
               >
-                🔄 Generate Round Robin Matches
+                🔄 Auto-Generate Round Robin (Resets Pool)
               </button>
             </div>
           </div>
