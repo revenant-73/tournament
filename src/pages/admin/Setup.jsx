@@ -375,6 +375,7 @@ const PoolsManager = ({ tournamentId }) => {
   const [teamsList, setTeamsList] = useState([]);
   const [poolTeamsMap, setPoolTeamsMap] = useState({}); // poolId -> array of team objects
   const [newPool, setNewPool] = useState({ name: '', court: '' });
+  const [selectedTeamId, setSelectedTeamId] = useState(null);
 
   useEffect(() => {
     fetchAgeGroups();
@@ -467,9 +468,11 @@ const PoolsManager = ({ tournamentId }) => {
   };
 
   const handleAssignTeam = async (poolId, teamId) => {
-    if (!teamId) return;
+    const tId = teamId || selectedTeamId;
+    if (!tId) return;
     try {
-      await db.insert(poolTeams).values({ poolId, teamId });
+      await db.insert(poolTeams).values({ poolId, teamId: tId });
+      setSelectedTeamId(null);
       fetchPools();
     } catch (error) {
       alert(error.message);
@@ -626,16 +629,58 @@ const PoolsManager = ({ tournamentId }) => {
         </button>
       </div>
 
+      {/* Unassigned Teams Selection */}
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-end px-1">
+          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            {selectedTeamId ? 'Step 2: Click a Pool to Assign' : 'Step 1: Click a Team to Select'}
+          </h4>
+          {selectedTeamId && (
+            <button 
+              onClick={() => setSelectedTeamId(null)}
+              className="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:underline"
+            >
+              Cancel Selection
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2 p-6 bg-slate-50 rounded-[2rem] border border-slate-100 min-h-[100px]">
+          {unassignedTeams.length > 0 ? unassignedTeams.map(team => (
+            <button
+              key={team.id}
+              onClick={() => setSelectedTeamId(team.id)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border shadow-sm ${
+                selectedTeamId === team.id 
+                  ? 'bg-brand-teal text-white border-brand-teal scale-105 shadow-teal-500/20' 
+                  : 'bg-white text-slate-600 border-slate-100 hover:border-brand-teal/30 hover:shadow-md active:scale-95'
+              }`}
+            >
+              {team.name}
+            </button>
+          )) : (
+            <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic w-full text-center">All teams assigned</span>
+          )}
+        </div>
+      </div>
+
       {/* Pools List */}
       <div className="flex flex-col gap-8">
         {poolsList.map(pool => (
-          <div key={pool.id} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-all">
+          <div 
+            key={pool.id} 
+            className={`bg-white rounded-[2rem] border transition-all overflow-hidden cursor-default ${
+              selectedTeamId 
+                ? 'border-brand-teal/30 ring-4 ring-brand-teal/5 hover:border-brand-teal hover:ring-brand-teal/10 hover:shadow-xl' 
+                : 'border-slate-100 shadow-sm hover:shadow-md'
+            }`}
+            onClick={() => selectedTeamId && handleAssignTeam(pool.id)}
+          >
             <div className="bg-slate-50 p-5 flex justify-between items-center border-b border-slate-100">
               <div className="flex flex-col">
                 <span className="font-black text-slate-900 uppercase italic tracking-tighter text-lg">{pool.name}</span>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{pool.court}</span>
               </div>
-              <button onClick={() => handleDeletePool(pool.id)} className="text-rose-400 hover:text-rose-600 text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-rose-50 rounded-full transition-colors">Delete</button>
+              <button onClick={(e) => { e.stopPropagation(); handleDeletePool(pool.id); }} className="text-rose-400 hover:text-rose-600 text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-rose-50 rounded-full transition-colors">Delete</button>
             </div>
             
             <div className="p-6 flex flex-col gap-6">
@@ -644,29 +689,21 @@ const PoolsManager = ({ tournamentId }) => {
                 {poolTeamsMap[pool.id]?.length > 0 ? poolTeamsMap[pool.id]?.map(team => (
                   <div key={team.id} className="bg-teal-50 text-brand-teal px-4 py-2 rounded-full text-[10px] font-black border border-teal-100 flex items-center gap-3 uppercase tracking-wider">
                     {team.name}
-                    <button onClick={() => handleRemoveTeam(pool.id, team.id)} className="text-teal-300 hover:text-rose-500 font-black text-sm">×</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleRemoveTeam(pool.id, team.id); }} className="text-teal-300 hover:text-rose-500 font-black text-sm">×</button>
                   </div>
                 )) : (
                   <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest px-1 italic">No teams assigned</span>
                 )}
               </div>
 
-              {/* Assign Team Dropdown */}
-              {unassignedTeams.length > 0 && (
-                <div className="flex gap-2">
-                  <select 
-                    className="flex-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal transition-all cursor-pointer"
-                    onChange={(e) => handleAssignTeam(pool.id, e.target.value)}
-                    value=""
-                  >
-                    <option value="" disabled>+ Assign team to {pool.name}...</option>
-                    {unassignedTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
+              {selectedTeamId && (
+                <div className="py-4 border-2 border-dashed border-brand-teal/20 rounded-2xl flex items-center justify-center bg-brand-teal/5 animate-pulse">
+                  <span className="text-[10px] font-black text-brand-teal uppercase tracking-widest">Click to Assign Selected Team</span>
                 </div>
               )}
 
               <button 
-                onClick={() => generateMatches(pool.id)}
+                onClick={(e) => { e.stopPropagation(); generateMatches(pool.id); }}
                 className="mt-2 text-[10px] font-black text-brand-coral uppercase tracking-[0.2em] border-2 border-brand-coral/10 rounded-2xl py-4 hover:bg-brand-coral hover:text-white hover:border-brand-coral transition-all"
               >
                 🔄 Generate Round Robin Matches
