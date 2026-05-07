@@ -114,7 +114,7 @@ const Setup = () => {
                   value={tournament.name}
                   onChange={e => setTournament({...tournament, name: e.target.value})}
                   className="p-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal outline-none font-bold text-slate-800 transition-all shadow-sm"
-                  placeholder="e.g. TVVC Summer Grass Open"
+                  placeholder="e.g. May 9-10 Shindig"
                 />
               </div>
 
