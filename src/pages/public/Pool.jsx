@@ -64,7 +64,12 @@ const PoolScreen = () => {
         
         {/* Standings Table */}
         <section>
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 px-2">Live Standings</h3>
+          <div className="flex justify-between items-end mb-4 px-2">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Live Standings</h3>
+            <span className="text-[10px] font-black text-brand-teal uppercase tracking-widest bg-teal-50 px-3 py-1 rounded-full border border-teal-100">
+              Court {pool.court}
+            </span>
+          </div>
           <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 border-b border-slate-100">
