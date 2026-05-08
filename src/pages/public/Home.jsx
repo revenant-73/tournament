@@ -134,7 +134,9 @@ const Home = () => {
                 <Link key={pool.id} to={`/pool/${pool.id}`} className="bg-white border border-slate-100 p-5 rounded-2xl flex justify-between items-center group active:scale-[0.98] transition-all shadow-sm hover:shadow-md">
                   <div className="flex flex-col">
                     <span className="font-black text-slate-800 tracking-tight uppercase italic">{pool.name}</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Court {pool.court}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      {pool.court.toLowerCase().includes('court') ? pool.court : `Court ${pool.court}`}
+                    </span>
                   </div>
                   <span className="text-brand-teal font-black text-xl group-hover:translate-x-1 transition-transform">→</span>
                 </Link>

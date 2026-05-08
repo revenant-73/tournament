@@ -56,10 +56,15 @@ const PoolScreen = () => {
   if (loading) return <Layout title="Loading..."><div className="p-8 text-center">Loading Pool...</div></Layout>;
   if (!pool) return <Layout title="Error"><div className="p-8 text-center">Pool not found</div></Layout>;
 
+  const formatCourt = (c) => {
+    if (!c) return '';
+    return c.toLowerCase().includes('court') ? c : `Court ${c}`;
+  };
+
   const standings = calculateStandings(teams, matchesList);
 
   return (
-    <Layout title={`${pool.name} • ${pool.court}`}>
+    <Layout title={`${pool.name} • ${pool.court.replace(/court/i, '').trim()}`}>
       <div className="flex flex-col gap-8">
         
         {/* Standings Table */}
@@ -67,7 +72,7 @@ const PoolScreen = () => {
           <div className="flex justify-between items-end mb-4 px-2">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Live Standings</h3>
             <span className="text-[10px] font-black text-brand-teal uppercase tracking-widest bg-teal-50 px-3 py-1 rounded-full border border-teal-100">
-              Court {pool.court}
+              {formatCourt(pool.court)}
             </span>
           </div>
           <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
