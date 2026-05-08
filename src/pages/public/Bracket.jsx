@@ -87,9 +87,17 @@ const BracketScreen = () => {
     return `Round ${r}`;
   };
 
+  const isGold = bracket.name.toLowerCase().includes('gold');
+  const isSilver = bracket.name.toLowerCase().includes('silver');
+
   return (
     <Layout title={`${bracket.name.toUpperCase()} Bracket`}>
       <div className="flex flex-col gap-12 py-4">
+        <div className="flex justify-center">
+          <div className={`px-8 py-2 rounded-full border-2 font-black uppercase tracking-[0.3em] text-[10px] italic ${isGold ? 'bg-amber-50 border-amber-200 text-amber-600' : isSilver ? 'bg-slate-50 border-slate-200 text-slate-500' : 'bg-teal-50 border-teal-200 text-teal-600'}`}>
+            {bracket.name} Tournament
+          </div>
+        </div>
         {rounds.map(roundNum => {
           const roundMatches = matchesList.filter(m => m.bracketRound === roundNum);
           if (roundMatches.length === 0) return null;
@@ -102,17 +110,24 @@ const BracketScreen = () => {
               <div className="flex flex-col gap-6 max-w-sm mx-auto w-full px-4">
                 {roundMatches.map(match => (
                   <div key={match.id} className="relative group">
-                    <div className="bg-white rounded-[1.5rem] shadow-sm border border-slate-100 overflow-hidden transition-all hover:shadow-md">
-                      {match.court && (
-                        <div className="bg-slate-50 border-b border-slate-100 px-4 py-1.5 flex justify-center">
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">
-                            Court {match.court}
-                          </span>
+                    <div className={`bg-white rounded-[1.5rem] shadow-sm border overflow-hidden transition-all hover:shadow-md ${isGold ? 'border-amber-100' : isSilver ? 'border-slate-100' : 'border-slate-100'}`}>
+                      {(match.court || match.startTime) && (
+                        <div className="bg-slate-50 border-b border-slate-100 px-4 py-1.5 flex justify-center gap-4">
+                          {match.court && (
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">
+                              Court {match.court}
+                            </span>
+                          )}
+                          {match.startTime && (
+                            <span className="text-[9px] font-black text-brand-coral uppercase tracking-widest italic">
+                              {match.startTime}
+                            </span>
+                          )}
                         </div>
                       )}
                       <div className={`p-5 flex justify-between items-center border-b border-slate-50 ${match.winnerId && match.winnerId === match.team1Id ? 'bg-teal-50/30' : ''}`}>
                         <span className={`font-black uppercase italic tracking-tighter truncate text-sm ${match.winnerId && match.winnerId === match.team1Id ? 'text-brand-teal' : 'text-slate-400'}`}>
-                          {teamsMap[match.team1Id] || (roundNum === 1 ? (match.team2Id ? 'TBD' : 'BYE') : 'TBD')}
+                          {teamsMap[match.team1Id] || (match.sourceMatch1Id ? 'TBD' : 'BYE')}
                         </span>
                         {match.status === 'complete' && match.winnerId && (
                           <span className={`font-black text-xs ${match.winnerId === match.team1Id ? 'text-brand-teal' : 'text-slate-300'}`}>
@@ -122,7 +137,7 @@ const BracketScreen = () => {
                       </div>
                       <div className={`p-5 flex justify-between items-center ${match.winnerId && match.winnerId === match.team2Id ? 'bg-teal-50/30' : ''}`}>
                         <span className={`font-black uppercase italic tracking-tighter truncate text-sm ${match.winnerId && match.winnerId === match.team2Id ? 'text-brand-teal' : 'text-slate-400'}`}>
-                          {teamsMap[match.team2Id] || (roundNum === 1 ? (match.team1Id ? 'TBD' : 'BYE') : 'TBD')}
+                          {teamsMap[match.team2Id] || (match.sourceMatch2Id ? 'TBD' : 'BYE')}
                         </span>
                         {match.status === 'complete' && match.winnerId && (
                           <span className={`font-black text-xs ${match.winnerId === match.team2Id ? 'text-brand-teal' : 'text-slate-300'}`}>

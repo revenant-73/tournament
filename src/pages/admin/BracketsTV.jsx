@@ -138,9 +138,10 @@ const BracketsTV = () => {
 
                               return (
                                 <div key={match.id} className="bg-white/5 p-2 rounded-lg border border-white/5 flex flex-col gap-1">
-                                  {match.court && (
-                                    <div className="text-[7px] font-black text-white/20 uppercase tracking-widest text-center border-b border-white/5 mb-1 pb-1">
-                                      Ct {match.court}
+                                  {(match.court || match.startTime) && (
+                                    <div className="text-[7px] font-black text-white/30 uppercase tracking-widest text-center border-b border-white/5 mb-1 pb-1 flex justify-center gap-2">
+                                      {match.court && <span>Ct {match.court}</span>}
+                                      {match.startTime && <span className="text-brand-coral">{match.startTime}</span>}
                                     </div>
                                   )}
                                   <div className={`flex justify-between items-center text-[9px] font-black uppercase italic truncate ${match.winnerId && match.winnerId === match.team1Id ? 'text-brand-teal' : 'text-white/40'}`}>

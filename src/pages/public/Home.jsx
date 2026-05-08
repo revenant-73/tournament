@@ -99,11 +99,13 @@ const Home = () => {
   if (!selectedAgeGroupId && ageGroupsList.length > 1) {
     return (
       <div className="min-h-screen bg-brand-black flex flex-col items-center justify-center p-8">
-        <div className="mb-16 text-center">
-          <h1 className="text-6xl font-black text-white mb-2 italic tracking-tighter uppercase leading-none">
-            <span className="text-brand-teal">{tournament.name.charAt(0)}</span>{tournament.name.slice(1)}
-          </h1>
-          <p className="text-xs text-white/40 font-bold uppercase tracking-[0.3em] ml-1">Tournament Management</p>
+        <div className="mb-12 text-center flex flex-col items-center">
+          <img 
+            src="/assets/images/may shindig 26.png" 
+            alt="May Shindig Logo" 
+            className="h-48 w-auto mb-4"
+          />
+          <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.5em] ml-1">Tournament Management</p>
         </div>
         <div className="w-full max-w-xs flex flex-col gap-4">
           <p className="text-white/30 text-[10px] text-center font-bold uppercase tracking-widest mb-2">Select Age Group</p>

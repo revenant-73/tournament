@@ -16,6 +16,7 @@ const BracketScores = () => {
   
   const [matchesList, setMatchesList] = useState([]);
   const [teamsMap, setTeamsMap] = useState({});
+  const [allTeams, setAllTeams] = useState([]);
   const [matchScores, setMatchScores] = useState({}); 
   const [saving, setSaving] = useState(null);
 
@@ -102,14 +103,19 @@ const BracketScores = () => {
           s1t1: m.set1Team1 || 0, s1t2: m.set1Team2 || 0,
           s2t1: m.set2Team1 || 0, s2t2: m.set2Team2 || 0,
           s3t1: m.set3Team1 || 0, s3t2: m.set3Team2 || 0,
-          court: m.court || ''
+          court: m.court || '',
+          startTime: m.startTime || '',
+          team1Id: m.team1Id || '',
+          team2Id: m.team2Id || ''
         };
       });
       setMatchScores(scoresMap);
       
       const teamsData = await db.query.teams.findMany({
-        where: eq(teams.ageGroupId, selectedGroupId)
+        where: eq(teams.ageGroupId, selectedGroupId),
+        orderBy: [asc(teams.name)]
       });
+      setAllTeams(teamsData || []);
       const teamMap = teamsData?.reduce((acc, t) => ({ ...acc, [t.id]: t.name }), {}) || {};
       setTeamsMap(teamMap);
     } catch (error) {
@@ -122,7 +128,7 @@ const BracketScores = () => {
       ...prev,
       [matchId]: {
         ...prev[matchId],
-        [field]: field === 'court' ? value : (parseInt(value) || 0)
+        [field]: (field === 'court' || field === 'startTime' || field === 'team1Id' || field === 'team2Id') ? value : (parseInt(value) || 0)
       }
     }));
   };
@@ -131,7 +137,7 @@ const BracketScores = () => {
     const scores = matchScores[match.id];
     setSaving(match.id);
 
-    const isPlaceholder = selectedItem.type === 'bracket' && (!match.team1Id || !match.team2Id);
+    const isPlaceholder = selectedItem.type === 'bracket' && (!scores.team1Id || !scores.team2Id);
     let winnerId = match.winnerId;
     let status = match.status;
 
@@ -159,7 +165,7 @@ const BracketScores = () => {
         if (needsSet3) sets.push({ team1: scores.s3t1, team2: scores.s3t2 });
         
         const stats = calculateMatchStats(sets);
-        winnerId = stats.winner === 1 ? match.team1Id : match.team2Id;
+        winnerId = stats.winner === 1 ? (scores.team1Id || match.team1Id) : (scores.team2Id || match.team2Id);
         status = 'complete';
       } else if (!isPlaceholder && !hasScores) {
         status = 'scheduled';
@@ -171,7 +177,12 @@ const BracketScores = () => {
           set1Team1: scores.s1t1, set1Team2: scores.s1t2,
           set2Team1: scores.s2t1, set2Team2: scores.s2t2,
           set3Team1: scores.s3t1, set3Team2: scores.s3t2,
-          court: scores.court, status: status, winnerId: winnerId
+          court: scores.court, 
+          startTime: scores.startTime,
+          team1Id: scores.team1Id || null,
+          team2Id: scores.team2Id || null,
+          status: status, 
+          winnerId: winnerId
         })
         .where(eq(matches.id, match.id));
 
@@ -214,6 +225,7 @@ const BracketScores = () => {
               <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 2</th>
               <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Set 3</th>
               <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Court</th>
+              <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Time</th>
               <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Status</th>
               <th className="p-4 text-[10px] font-black uppercase tracking-widest italic text-center">Action</th>
             </tr>
@@ -223,7 +235,7 @@ const BracketScores = () => {
               const s = matchScores[match.id] || { s1t1: 0, s1t2: 0, s2t1: 0, s2t2: 0, s3t1: 0, s3t2: 0, court: '' };
               const t1 = teamsMap[match.team1Id] || (match.sourceMatch1Id ? 'TBD' : 'BYE');
               const t2 = teamsMap[match.team2Id] || (match.sourceMatch2Id ? 'TBD' : 'BYE');
-              const isPlaceholder = selectedItem.type === 'bracket' && (!match.team1Id || !match.team2Id);
+              const isPlaceholder = selectedItem.type === 'bracket' && (!s.team1Id || !s.team2Id);
 
               return (
                 <tr key={match.id} className="hover:bg-slate-50/50 transition-colors">
@@ -231,10 +243,31 @@ const BracketScores = () => {
                     {selectedItem.type === 'pool' ? `M${match.matchOrder}` : `P${match.bracketPosition}`}
                   </td>
                   <td className="p-4">
-                    <div className="flex flex-col gap-1">
-                      <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winnerId === match.team1Id ? 'text-brand-teal' : 'text-slate-800'}`}>{t1}</span>
-                      <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winnerId === match.team2Id ? 'text-brand-teal' : 'text-slate-800'}`}>{t2}</span>
-                    </div>
+                    {selectedItem.type === 'bracket' ? (
+                      <div className="flex flex-col gap-2">
+                        <select 
+                          value={s.team1Id} 
+                          onChange={e => handleScoreChange(match.id, 'team1Id', e.target.value)}
+                          className={`text-xs font-black uppercase italic border border-slate-100 rounded bg-white outline-none p-1 w-full max-w-[140px] ${match.winnerId && match.winnerId === s.team1Id ? 'text-brand-teal' : 'text-slate-800'}`}
+                        >
+                          <option value="">{match.sourceMatch1Id ? 'TBD' : 'BYE'}</option>
+                          {allTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </select>
+                        <select 
+                          value={s.team2Id} 
+                          onChange={e => handleScoreChange(match.id, 'team2Id', e.target.value)}
+                          className={`text-xs font-black uppercase italic border border-slate-100 rounded bg-white outline-none p-1 w-full max-w-[140px] ${match.winnerId && match.winnerId === s.team2Id ? 'text-brand-teal' : 'text-slate-800'}`}
+                        >
+                          <option value="">{match.sourceMatch2Id ? 'TBD' : 'BYE'}</option>
+                          {allTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </select>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winnerId === match.team1Id ? 'text-brand-teal' : 'text-slate-800'}`}>{t1}</span>
+                        <span className={`text-sm font-black uppercase italic tracking-tighter ${match.winnerId === match.team2Id ? 'text-brand-teal' : 'text-slate-800'}`}>{t2}</span>
+                      </div>
+                    )}
                   </td>
                   <td className="p-4">
                     <div className="flex flex-col gap-2 items-center">
@@ -256,7 +289,12 @@ const BracketScores = () => {
                   </td>
                   <td className="p-4">
                     <div className="flex justify-center">
-                      <input type="text" value={s.court} onChange={e => handleScoreChange(match.id, 'court', e.target.value)} placeholder="Ct" className="w-16 p-1 text-center border rounded font-black text-slate-600 bg-slate-50 outline-none"/>
+                      <input type="text" value={s.court} onChange={e => handleScoreChange(match.id, 'court', e.target.value)} placeholder="Ct" className="w-12 p-1 text-center border rounded font-black text-slate-600 bg-slate-50 outline-none"/>
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex justify-center">
+                      <input type="text" value={s.startTime} onChange={e => handleScoreChange(match.id, 'startTime', e.target.value)} placeholder="Time" className="w-20 p-1 text-center border rounded font-black text-slate-600 bg-slate-50 outline-none"/>
                     </div>
                   </td>
                   <td className="p-4 text-center">

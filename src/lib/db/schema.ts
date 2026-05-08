@@ -84,6 +84,7 @@ export const matches = sqliteTable("matches", {
   team2Id: text("team2_id").references(() => teams.id, { onDelete: "set null" }),
   refTeamId: text("ref_team_id").references(() => teams.id, { onDelete: "set null" }),
   court: text("court"),
+  startTime: text("start_time"),
   matchOrder: integer("match_order").notNull().default(0),
   status: text("status", { enum: ["scheduled", "complete"] }).notNull().default("scheduled"),
   winnerId: text("winner_id").references(() => teams.id, { onDelete: "set null" }),
