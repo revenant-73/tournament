@@ -376,6 +376,7 @@ const PoolsManager = ({ tournamentId }) => {
   const [poolTeamsMap, setPoolTeamsMap] = useState({}); // poolId -> array of team objects
   const [matchesMap, setMatchesMap] = useState({}); // poolId -> array of matches
   const [newPool, setNewPool] = useState({ name: '', court: '' });
+  const [editingPool, setEditingPool] = useState(null); // { id, name, court }
   const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [manualMatch, setManualMatch] = useState({ poolId: null, team1Id: '', team2Id: '', matchOrder: '', court: '' });
 
@@ -481,6 +482,19 @@ const PoolsManager = ({ tournamentId }) => {
     if (!confirm('Delete pool and all its matches?')) return;
     try {
       await db.delete(pools).where(eq(pools.id, id));
+      fetchPools();
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleUpdatePool = async () => {
+    if (!editingPool || !editingPool.name || !editingPool.court) return;
+    try {
+      await db.update(pools)
+        .set({ name: editingPool.name, court: editingPool.court })
+        .where(eq(pools.id, editingPool.id));
+      setEditingPool(null);
       fetchPools();
     } catch (error) {
       alert(error.message);
@@ -754,11 +768,41 @@ const PoolsManager = ({ tournamentId }) => {
             onClick={() => selectedTeamId && handleAssignTeam(pool.id)}
           >
             <div className="bg-slate-50 p-5 flex justify-between items-center border-b border-slate-100">
-              <div className="flex flex-col">
-                <span className="font-black text-slate-900 uppercase italic tracking-tighter text-lg">{pool.name}</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{pool.court}</span>
+              {editingPool?.id === pool.id ? (
+                <div className="flex gap-2 items-center flex-1 mr-4" onClick={e => e.stopPropagation()}>
+                  <input 
+                    type="text"
+                    value={editingPool.name}
+                    onChange={e => setEditingPool({...editingPool, name: e.target.value})}
+                    className="p-2 border rounded-lg font-black uppercase italic w-24"
+                  />
+                  <input 
+                    type="text"
+                    value={editingPool.court}
+                    onChange={e => setEditingPool({...editingPool, court: e.target.value})}
+                    className="p-2 border rounded-lg text-[10px] font-bold uppercase w-24"
+                  />
+                  <button onClick={handleUpdatePool} className="text-brand-teal font-black text-[10px] uppercase">Save</button>
+                  <button onClick={() => setEditingPool(null)} className="text-slate-400 font-black text-[10px] uppercase">Cancel</button>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  <span className="font-black text-slate-900 uppercase italic tracking-tighter text-lg">{pool.name}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{pool.court}</span>
+                </div>
+              )}
+              
+              <div className="flex gap-2">
+                {editingPool?.id !== pool.id && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setEditingPool({ id: pool.id, name: pool.name, court: pool.court }); }}
+                    className="text-slate-400 hover:text-brand-teal text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-white border border-slate-100 rounded-full transition-colors"
+                  >
+                    Edit
+                  </button>
+                )}
+                <button onClick={(e) => { e.stopPropagation(); handleDeletePool(pool.id); }} className="text-rose-400 hover:text-rose-600 text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-rose-50 rounded-full transition-colors">Delete</button>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); handleDeletePool(pool.id); }} className="text-rose-400 hover:text-rose-600 text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-rose-50 rounded-full transition-colors">Delete</button>
             </div>
             
             <div className="p-6 flex flex-col gap-6">
