@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../lib/db';
-import { tournaments, ageGroups, teams, pools, poolTeams, matches } from '../../lib/db/schema';
+import { tournaments, ageGroups, teams, pools, poolTeams, matches, brackets } from '../../lib/db/schema';
 import { eq, asc, and, sql } from 'drizzle-orm';
 import Layout from '../../components/Layout';
 
