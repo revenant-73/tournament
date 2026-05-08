@@ -89,7 +89,7 @@ const Setup = () => {
       <div className="flex flex-col gap-6 py-2">
         {/* Tab Navigation */}
         <div className="flex border-b border-slate-100 overflow-x-auto no-scrollbar">
-          {['tournament', 'age groups', 'teams', 'pools'].map(tab => (
+          {['tournament', 'age groups', 'teams', 'pools', 'brackets'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -192,9 +192,143 @@ const Setup = () => {
           {activeTab === 'pools' && tournament.id && (
             <PoolsManager tournamentId={tournament.id} />
           )}
+
+          {activeTab === 'brackets' && tournament.id && (
+            <BracketsManager tournamentId={tournament.id} />
+          )}
         </div>
       </div>
     </Layout>
+  );
+};
+
+const BracketsManager = ({ tournamentId }) => {
+  const [ageGroupsList, setAgeGroupsList] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [bracketsList, setBracketsList] = useState([]);
+  const [newBracket, setNewBracket] = useState({ name: '', size: '4', round: '2' });
+
+  useEffect(() => {
+    fetchAgeGroups();
+  }, [tournamentId]);
+
+  useEffect(() => {
+    if (selectedGroupId) fetchBrackets();
+  }, [selectedGroupId]);
+
+  async function fetchAgeGroups() {
+    try {
+      const data = await db.query.ageGroups.findMany({
+        where: eq(ageGroups.tournamentId, tournamentId),
+        orderBy: [asc(ageGroups.displayOrder)]
+      });
+      if (data) {
+        setAgeGroupsList(data);
+        if (data.length > 0) setSelectedGroupId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching age groups:', error);
+    }
+  }
+
+  async function fetchBrackets() {
+    try {
+      const data = await db.query.brackets.findMany({
+        where: eq(brackets.ageGroupId, selectedGroupId),
+        orderBy: [asc(brackets.round), asc(brackets.displayOrder)]
+      });
+      if (data) setBracketsList(data);
+    } catch (error) {
+      console.error('Error fetching brackets:', error);
+    }
+  }
+
+  const handleAddBracket = async () => {
+    if (!newBracket.name || !selectedGroupId) return;
+    try {
+      await db.insert(brackets).values({
+        ageGroupId: selectedGroupId,
+        name: newBracket.name,
+        size: parseInt(newBracket.size),
+        round: parseInt(newBracket.round),
+        displayOrder: bracketsList.length
+      });
+      setNewBracket({ name: '', size: '4', round: '2' });
+      fetchBrackets();
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleDeleteBracket = async (id) => {
+    if (!confirm('Delete bracket and all its matches?')) return;
+    try {
+      await db.delete(brackets).where(eq(brackets.id, id));
+      fetchBrackets();
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Select Age Group</label>
+        <select 
+          value={selectedGroupId} 
+          onChange={e => setSelectedGroupId(e.target.value)}
+          className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all shadow-sm cursor-pointer"
+        >
+          {ageGroupsList.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+        </select>
+      </div>
+
+      <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex flex-col gap-4 shadow-sm">
+        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Create New Bracket</h4>
+        <div className="grid grid-cols-3 gap-4">
+          <input 
+            type="text" 
+            placeholder="Name (Gold, Silver...)" 
+            value={newBracket.name}
+            onChange={e => setNewBracket({...newBracket, name: e.target.value})}
+            className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all"
+          />
+          <select 
+            value={newBracket.size}
+            onChange={e => setNewBracket({...newBracket, size: e.target.value})}
+            className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all cursor-pointer"
+          >
+            <option value="2">2 Teams (Final Only)</option>
+            <option value="4">4 Teams (SF, Final)</option>
+            <option value="8">8 Teams (QF, SF, Final)</option>
+          </select>
+          <select 
+            value={newBracket.round}
+            onChange={e => setNewBracket({...newBracket, round: e.target.value})}
+            className="p-4 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand-teal/10 focus:border-brand-teal font-bold text-slate-800 transition-all cursor-pointer"
+          >
+            <option value="1">Round 1</option>
+            <option value="2">Round 2</option>
+            <option value="3">Round 3</option>
+          </select>
+        </div>
+        <button onClick={handleAddBracket} className="btn btn-primary py-4 text-[10px] uppercase tracking-[0.2em] font-black">
+          Add Bracket to Schedule
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {bracketsList.map(bracket => (
+          <div key={bracket.id} className="bg-white p-5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm hover:shadow-md transition-all group">
+            <div className="flex flex-col">
+              <span className="font-black text-slate-800 tracking-tight uppercase italic">{bracket.name} Bracket</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{bracket.size} Teams • Round {bracket.round}</span>
+            </div>
+            <button onClick={() => handleDeleteBracket(bracket.id)} className="text-rose-400 hover:text-rose-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-rose-50 rounded-full opacity-0 group-hover:opacity-100 transition-all">Delete</button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 

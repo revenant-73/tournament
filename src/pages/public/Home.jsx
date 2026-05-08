@@ -162,9 +162,6 @@ const Home = () => {
           <Link to="/info" className="bg-white border border-slate-100 text-slate-600 font-bold p-4 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all text-sm uppercase tracking-wider">
             <span>ℹ️</span> Tournament Info
           </Link>
-          <Link to="/results" className="bg-white border border-slate-100 text-slate-600 font-bold p-4 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all text-sm uppercase tracking-wider">
-            <span>🏆</span> Final Results
-          </Link>
         </div>
 
         {ageGroupsList.length > 1 && (
