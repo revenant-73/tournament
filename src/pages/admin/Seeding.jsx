@@ -7,24 +7,13 @@ import { calculateStandings } from '../../lib/scoring';
 import { generateBracketMatches, generatePoolMatches, BRACKET_SIZES } from '../../lib/bracketGenerator';
 import Layout from '../../components/Layout';
 
-const FORMATS = [
-  { id: '2x6_brackets', name: 'Two 6-Team Brackets (Gold/Silver)', type: 'bracket', brackets: [{ name: 'Gold', size: 6 }, { name: 'Silver', size: 6 }] },
-  { id: '1x6_bracket', name: 'One 6-Team Bracket', type: 'bracket', brackets: [{ name: 'Championship', size: 6 }] },
-  { id: '3x3_pools', name: 'Three 3-Team Pools (Gold/Silver/Bronze)', type: 'pool', pools: [{ name: 'Gold', size: 3 }, { name: 'Silver', size: 3 }, { name: 'Bronze', size: 3 }] },
-  { id: '1x8_bracket', name: 'One 8-Team Bracket', type: 'bracket', brackets: [{ name: 'Championship', size: 8 }] },
-  { id: '2x4_brackets', name: 'Two 4-Team Brackets', type: 'bracket', brackets: [{ name: 'Gold', size: 4 }, { name: 'Silver', size: 4 }] },
-  { id: '1x4_bracket', name: 'One 4-Team Bracket', type: 'bracket', brackets: [{ name: 'Championship', size: 4 }] },
-  { id: 'custom_bracket', name: 'Custom Bracket Size', type: 'bracket_custom' }
-];
-
 const Seeding = () => {
   const navigate = useNavigate();
   const [ageGroupsList, setAgeGroupsList] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [rankedTeams, setRankedTeams] = useState([]);
-  const [selectedFormat, setSelectedFormat] = useState(FORMATS[0]);
-  const [customSize, setCustomSize] = useState(8);
-  const [seeding, setSeeding] = useState({}); // sectionName -> { seedIndex: team }
+  const [availableBrackets, setAvailableBrackets] = useState([]);
+  const [seeding, setSeeding] = useState({}); // bracketId -> { seedIndex: team }
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -35,7 +24,10 @@ const Seeding = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedGroupId) fetchRankings();
+    if (selectedGroupId) {
+      fetchRankings();
+      fetchBrackets();
+    }
   }, [selectedGroupId]);
 
   async function fetchAgeGroups() {
@@ -51,6 +43,19 @@ const Seeding = () => {
       }
     } catch (error) {
       console.error('Error fetching age groups:', error);
+    }
+  }
+
+  async function fetchBrackets() {
+    try {
+      const data = await db.query.brackets.findMany({
+        where: eq(brackets.ageGroupId, selectedGroupId),
+        orderBy: [asc(brackets.round), asc(brackets.displayOrder)]
+      });
+      setAvailableBrackets(data || []);
+      setSeeding({});
+    } catch (error) {
+      console.error('Error fetching brackets:', error);
     }
   }
 
@@ -75,20 +80,20 @@ const Seeding = () => {
     }
   }
 
-  const assignSeed = (section, seed) => {
+  const assignSeed = (bracketId, seed) => {
     if (!selectedTeam) return;
     
     const newSeeding = { ...seeding };
-    if (!newSeeding[section]) newSeeding[section] = {};
+    if (!newSeeding[bracketId]) newSeeding[bracketId] = {};
 
     // Remove team from any other slot first
-    Object.keys(newSeeding).forEach(sec => {
-      Object.keys(newSeeding[sec]).forEach(s => {
-        if (newSeeding[sec][s]?.id === selectedTeam.id) delete newSeeding[sec][s];
+    Object.keys(newSeeding).forEach(bId => {
+      Object.keys(newSeeding[bId]).forEach(s => {
+        if (newSeeding[bId][s]?.id === selectedTeam.id) delete newSeeding[bId][s];
       });
     });
 
-    newSeeding[section][seed] = selectedTeam;
+    newSeeding[bracketId][seed] = selectedTeam;
     setSeeding(newSeeding);
     setSelectedTeam(null);
   };
@@ -96,73 +101,30 @@ const Seeding = () => {
   const handleGenerate = async () => {
     setSaving(true);
     try {
-      if (selectedFormat.type === 'bracket' || selectedFormat.type === 'bracket_custom') {
-        const bracketsToCreate = selectedFormat.type === 'bracket_custom' 
-          ? [{ name: 'Custom', size: customSize }] 
-          : selectedFormat.brackets;
+      // Delete old bracket matches for this age group
+      await db.delete(matches).where(and(
+        eq(matches.ageGroupId, selectedGroupId),
+        eq(matches.matchType, 'bracket')
+      ));
 
-        // 1. Ensure brackets exist
-        await db.delete(matches).where(and(
-          eq(matches.ageGroupId, selectedGroupId),
-          eq(matches.matchType, 'bracket')
-        ));
+      for (const bracket of availableBrackets) {
+        const bracketSeeding = seeding[bracket.id] || {};
+        const matchData = generateBracketMatches(selectedGroupId, bracket.id, bracket.size, bracketSeeding);
         
-        for (const bInfo of bracketsToCreate) {
-          let bracket = await db.query.brackets.findFirst({
-            where: and(
-              eq(brackets.ageGroupId, selectedGroupId),
-              eq(brackets.name, bInfo.name)
-            )
-          });
-          
-          if (!bracket) {
-            const result = await db.insert(brackets).values({
-              ageGroupId: selectedGroupId, name: bInfo.name, size: bInfo.size, round: 2
-            }).returning();
-            bracket = result[0];
-          } else {
-            await db.update(brackets).set({ size: bInfo.size }).where(eq(brackets.id, bracket.id));
+        // Insert sequentially to link source matches
+        const insertedMatches = [];
+        for (const m of matchData) {
+          const { _meta, ...cleanMatch } = m;
+          if (_meta) {
+            if (_meta.source1 !== null) cleanMatch.sourceMatch1Id = insertedMatches[_meta.source1].id;
+            if (_meta.source2 !== null) cleanMatch.sourceMatch2Id = insertedMatches[_meta.source2].id;
           }
-
-          const matchData = generateBracketMatches(selectedGroupId, bracket.id, bInfo.size, seeding[bInfo.name] || {});
-          
-          // Insert sequentially to link source matches
-          const insertedMatches = [];
-          for (const m of matchData) {
-            const { _meta, ...cleanMatch } = m;
-            if (_meta) {
-              if (_meta.source1 !== null) cleanMatch.sourceMatch1Id = insertedMatches[_meta.source1].id;
-              if (_meta.source2 !== null) cleanMatch.sourceMatch2Id = insertedMatches[_meta.source2].id;
-            }
-            const result = await db.insert(matches).values(cleanMatch).returning();
-            insertedMatches.push(result[0]);
-          }
-        }
-      } else if (selectedFormat.type === 'pool') {
-        // Handle 2nd round pool play
-        await db.delete(matches).where(and(
-          eq(matches.ageGroupId, selectedGroupId),
-          eq(matches.matchType, 'pool'),
-          gt(matches.matchOrder, 100)
-        ));
-        
-        for (const pInfo of selectedFormat.pools) {
-          const result = await db.insert(pools).values({
-            ageGroupId: selectedGroupId, name: pInfo.name + ' Pool', court: 'TBD', round: 2
-          }).returning();
-          const pool = result[0];
-
-          const teamsInSeeding = Object.values(seeding[pInfo.name] || {});
-          for (const team of teamsInSeeding) {
-            await db.insert(poolTeams).values({ poolId: pool.id, teamId: team.id });
-          }
-
-          const poolMatches = generatePoolMatches(selectedGroupId, pool.id, teamsInSeeding, 101); // Match order starts at 101 for R2
-          await db.insert(matches).values(poolMatches);
+          const result = await db.insert(matches).values(cleanMatch).returning();
+          insertedMatches.push(result[0]);
         }
       }
 
-      alert('Next round generated successfully!');
+      alert('Brackets generated successfully!');
       navigate('/admin/dashboard');
     } catch (err) {
       alert('Error: ' + err.message);
@@ -186,27 +148,11 @@ const Seeding = () => {
                 {ageGroupsList.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
               </select>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Next Round Format</label>
-              <select 
-                value={selectedFormat.id} 
-                onChange={e => {
-                  setSelectedFormat(FORMATS.find(f => f.id === e.target.value));
-                  setSeeding({});
-                }} 
-                className="p-3 border rounded-xl text-xs font-bold bg-white outline-none"
-              >
-                {FORMATS.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-              </select>
+            <div className="p-4 bg-white/50 rounded-xl border border-slate-100">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                Configure bracket sizes and names in the <Link to="/admin/setup" className="text-brand-teal underline">Setup area</Link> first.
+              </p>
             </div>
-            {selectedFormat.id === 'custom_bracket' && (
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase px-1">Bracket Size</label>
-                <select value={customSize} onChange={e => setCustomSize(parseInt(e.target.value))} className="p-3 border rounded-xl text-xs font-bold bg-white outline-none">
-                  {BRACKET_SIZES.map(s => <option key={s} value={s}>{s} Teams</option>)}
-                </select>
-              </div>
-            )}
           </div>
 
           <section>
@@ -232,24 +178,24 @@ const Seeding = () => {
 
         <div className="flex flex-col gap-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {activeSections.map(section => (
-              <div key={section.name} className="flex flex-col gap-4">
+            {availableBrackets.map(bracket => (
+              <div key={bracket.id} className="flex flex-col gap-4">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-center mb-2 text-brand-teal">
-                  {section.name} {selectedFormat.type === 'pool' ? 'Pool' : 'Bracket'}
+                  {bracket.name} Bracket ({bracket.size} teams)
                 </h4>
                 <div className="flex flex-col gap-3">
-                  {Array.from({ length: section.size }).map((_, i) => {
+                  {Array.from({ length: bracket.size }).map((_, i) => {
                     const seed = i + 1;
                     return (
                       <button
                         key={seed}
-                        onClick={() => assignSeed(section.name, seed)}
+                        onClick={() => assignSeed(bracket.id, seed)}
                         className="h-16 border-2 border-dashed border-slate-100 rounded-2xl flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all overflow-hidden bg-white active:scale-95 group"
                       >
-                        {seeding[section.name]?.[seed] ? (
+                        {seeding[bracket.id]?.[seed] ? (
                           <div className="w-full h-full flex items-center px-4 bg-teal-50 text-brand-teal font-black border-l-8 border-brand-teal italic uppercase tracking-tighter text-sm">
                             <span className="opacity-40 mr-3">SEED {seed}</span>
-                            <span className="truncate">{seeding[section.name][seed].name}</span>
+                            <span className="truncate">{seeding[bracket.id][seed].name}</span>
                           </div>
                         ) : (
                           <span className="opacity-30 group-hover:opacity-60">+ Seed {seed}</span>
@@ -260,6 +206,13 @@ const Seeding = () => {
                 </div>
               </div>
             ))}
+            {availableBrackets.length === 0 && (
+              <div className="col-span-2 p-12 text-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-100">
+                <p className="text-slate-400 font-black uppercase italic tracking-widest text-xs">
+                  No brackets configured for this age group.
+                </p>
+              </div>
+            )}
           </div>
 
           <button
