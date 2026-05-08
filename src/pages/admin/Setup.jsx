@@ -640,6 +640,27 @@ const PoolsManager = ({ tournamentId }) => {
     }
   };
 
+  const handleMoveMatch = async (poolId, matchId, direction) => {
+    const poolMatches = matchesMap[poolId] || [];
+    const index = poolMatches.findIndex(m => m.id === matchId);
+    if (index === -1) return;
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === poolMatches.length - 1) return;
+
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    const currentMatch = poolMatches[index];
+    const targetMatch = poolMatches[targetIndex];
+
+    try {
+      // Swap matchOrder
+      await db.update(matches).set({ matchOrder: targetMatch.matchOrder }).where(eq(matches.id, currentMatch.id));
+      await db.update(matches).set({ matchOrder: currentMatch.matchOrder }).where(eq(matches.id, targetMatch.id));
+      fetchMatches();
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
   const getTeamName = (id) => {
     const team = teamsList.find(t => t.id === id);
     return team ? team.name : 'Unknown';
@@ -772,7 +793,7 @@ const PoolsManager = ({ tournamentId }) => {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  {(matchesMap[pool.id] || []).map(match => (
+                  {(matchesMap[pool.id] || []).map((match, idx, arr) => (
                     <div key={match.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 group/match">
                       <div className="flex items-center gap-4">
                         <span className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-400">{match.matchOrder}</span>
@@ -785,12 +806,30 @@ const PoolsManager = ({ tournamentId }) => {
                           <span className="text-[10px] font-bold text-brand-teal uppercase tracking-tighter bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100">{match.court}</span>
                         )}
                       </div>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDeleteMatch(match.id); }}
-                        className="text-rose-400 hover:text-rose-600 opacity-0 group-hover/match:opacity-100 transition-opacity p-1"
-                      >
-                        ×
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <div className="flex flex-col opacity-0 group-hover/match:opacity-100 transition-opacity">
+                          <button 
+                            disabled={idx === 0}
+                            onClick={(e) => { e.stopPropagation(); handleMoveMatch(pool.id, match.id, 'up'); }}
+                            className="text-[10px] text-slate-400 hover:text-brand-teal disabled:opacity-0"
+                          >
+                            ▲
+                          </button>
+                          <button 
+                            disabled={idx === arr.length - 1}
+                            onClick={(e) => { e.stopPropagation(); handleMoveMatch(pool.id, match.id, 'down'); }}
+                            className="text-[10px] text-slate-400 hover:text-brand-teal disabled:opacity-0"
+                          >
+                            ▼
+                          </button>
+                        </div>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteMatch(match.id); }}
+                          className="text-rose-400 hover:text-rose-600 opacity-0 group-hover/match:opacity-100 transition-opacity p-2 ml-1"
+                        >
+                          ×
+                        </button>
+                      </div>
                     </div>
                   ))}
                   {(!matchesMap[pool.id] || matchesMap[pool.id].length === 0) && (
