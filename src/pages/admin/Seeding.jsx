@@ -9,9 +9,11 @@ import Layout from '../../components/Layout';
 
 const FORMATS = [
   { id: '2x6_brackets', name: 'Two 6-Team Brackets (Gold/Silver)', type: 'bracket', brackets: [{ name: 'Gold', size: 6 }, { name: 'Silver', size: 6 }] },
+  { id: '1x6_bracket', name: 'One 6-Team Bracket', type: 'bracket', brackets: [{ name: 'Championship', size: 6 }] },
   { id: '3x3_pools', name: 'Three 3-Team Pools (Gold/Silver/Bronze)', type: 'pool', pools: [{ name: 'Gold', size: 3 }, { name: 'Silver', size: 3 }, { name: 'Bronze', size: 3 }] },
   { id: '1x8_bracket', name: 'One 8-Team Bracket', type: 'bracket', brackets: [{ name: 'Championship', size: 8 }] },
   { id: '2x4_brackets', name: 'Two 4-Team Brackets', type: 'bracket', brackets: [{ name: 'Gold', size: 4 }, { name: 'Silver', size: 4 }] },
+  { id: '1x4_bracket', name: 'One 4-Team Bracket', type: 'bracket', brackets: [{ name: 'Championship', size: 4 }] },
   { id: 'custom_bracket', name: 'Custom Bracket Size', type: 'bracket_custom' }
 ];
 

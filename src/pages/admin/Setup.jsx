@@ -300,6 +300,7 @@ const BracketsManager = ({ tournamentId }) => {
           >
             <option value="2">2 Teams (Final Only)</option>
             <option value="4">4 Teams (SF, Final)</option>
+            <option value="6">6 Teams (QF, SF, Final)</option>
             <option value="8">8 Teams (QF, SF, Final)</option>
           </select>
           <select 
